@@ -91,16 +91,12 @@ def main():
         ]
     ]
 
-
     # create the window and show it without the plot
-    window = sg.Window('Image Processing',
-                        layout, location=(10, 10))
+    window = sg.Window('Image Processing', layout, location=(10, 10))
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
     cap = cv2.VideoCapture(0)
     recording = False
-
-    
 
     while True:
         
