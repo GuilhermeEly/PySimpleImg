@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 def compareImages(DefaultImage, ComparedImage):
-    scaledown_percent = 10
+    scaledown_percent = 70
 
     DefaultImageResized = resizeImage(DefaultImage, scaledown_percent)
 
@@ -61,6 +61,7 @@ def main():
     sg.theme('Black')
 
     init = True
+    framescale = 90
 
     layout = [
         [
@@ -123,7 +124,7 @@ def main():
         elif event == 'Comparar':
 
             ret, frame = cap.read()
-            loadCompare = resizeImage(frame, 40)
+            loadCompare = resizeImage(frame, framescale)
 
             result = compareImages(loadDefault, loadCompare)
 
@@ -134,13 +135,13 @@ def main():
 
         elif event == 'Salvar':
             ret, frame = cap.read()
-            loadDefault = resizeImage(frame, 40)
+            loadDefault = resizeImage(frame, framescale)
             encodedDefault = cv2.imencode('.png', loadDefault)[1].tobytes()
             window['image'].update(data=encodedDefault)
 
         if recording:
             ret, frame = cap.read()
-            frame = resizeImage(frame, 40)
+            frame = resizeImage(frame, framescale)
             imgbytes = cv2.imencode('.png', frame)[1].tobytes()  # ditto
             window['image3'].update(data=imgbytes)
 
