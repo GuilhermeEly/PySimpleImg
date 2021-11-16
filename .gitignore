@@ -1,2 +1,9 @@
 \.venv
+__pycache__
+build
+dist
+
 start_venv.bat
+pyinstallerConfig.txt
+*.spec
+*.pyc

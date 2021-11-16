@@ -58,6 +58,7 @@ def resizeImage(image, percent):
 
 def main():
 
+    print(cv2.__file__)
     sg.theme('Black')
 
     init = True
