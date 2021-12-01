@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 def compareImages(DefaultImage, ComparedImage):
-    scaledown_percent = 70
+    scaledown_percent = 100
 
     DefaultImageResized = resizeImage(DefaultImage, scaledown_percent)
 
@@ -24,7 +24,12 @@ def compareImages(DefaultImage, ComparedImage):
 
     diff = (diff * 255).astype("uint8")
 
-    thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    if(score>0.994):
+        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV)[1]
+
+    else:
+        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
     contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     contours = contours[0] if len(contours) == 2 else contours[1]
@@ -33,14 +38,14 @@ def compareImages(DefaultImage, ComparedImage):
 
     for c in contours:
         area = cv2.contourArea(c)
-        if area > 40:
+        if area > 250:
             x,y,w,h = cv2.boundingRect(c)
             cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (36,255,12), 2)
             cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (36,255,12), 2)
             cv2.drawContours(mask, [c], 0, (0,255,0), -1)
             cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
-    scaleup_percent = 150 # percent of original size
+    scaleup_percent = 100 # percent of original size
 
     resultCompared = resizeImage(ComparedImage, scaleup_percent)
 
@@ -48,7 +53,7 @@ def compareImages(DefaultImage, ComparedImage):
 
     DefaultImageResized = resizeImage(DefaultImageResized, scaleup_percent)
 
-    return resultCompared, DefaultImageResized, upfilled
+    return resultCompared, DefaultImageResized, upfilled, diff
 
 def resizeImage(image, percent):
     width = int(image.shape[1] * percent / 100)
@@ -62,7 +67,7 @@ def main():
     sg.theme('Black')
 
     init = True
-    framescale = 90
+    framescale = 50
 
     layout = [
         [
@@ -70,14 +75,20 @@ def main():
             [
                 sg.Image(filename='', key='image')
             ]]),
-            sg.Frame("Diferenças", layout = [ 
-            [
-                sg.Image(filename='', key='image2')
-            ]]),
             sg.Frame("Feedback", layout = [ 
             [
                 sg.Image(filename='', key='image3')
             ]])      
+        ],
+        [
+            sg.Frame("Diferenças", layout = [ 
+            [
+                sg.Image(filename='', key='image2')
+            ]]),
+            sg.Frame("Mask", layout = [ 
+            [
+                sg.Image(filename='', key='image4')
+            ]])
         ],
         [
             sg.Frame("", layout= [
@@ -86,7 +97,8 @@ def main():
                 sg.Button('Salvar', size=(10, 1), font='Any 14'),
                 sg.Button('Comparar', size=(10, 1), font='Any 14'),
                 sg.Button('Parar', size=(10, 1), font='Any 14'),
-                sg.Button('Sair', size=(10, 1), font='Helvetica 14')
+                sg.Button('Sair', size=(10, 1), font='Helvetica 14'),
+                sg.Slider(range=(1, 100), orientation='h', key='Focus', size=(20, 20), default_value=framescale)
             ]])
         ]
     ]
@@ -95,12 +107,18 @@ def main():
     window = sg.Window('Image Processing', layout, location=(10, 10))
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
+    cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
+    cap.set(cv2.CAP_PROP_FOCUS,50)
     recording = False
 
     while True:
         
         event, values = window.read(timeout=20)
+
+        #Controle de foco pelo slider, caso seja necessário
+        #cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
+        cap.set(cv2.CAP_PROP_FOCUS,50)
         
         if event == 'Sair' or event == sg.WIN_CLOSED:
             return
@@ -111,12 +129,13 @@ def main():
         elif event == 'Parar' or init:
             recording = False
             init = False
-            img = np.full((300, 300), 0)
+            img = np.full((150, 150), 0)
             # this is faster, shorter and needs less includes
             imgbytes = cv2.imencode('.png', img)[1].tobytes()
             window['image'].update(data=imgbytes)
             window['image2'].update(data=imgbytes)
             window['image3'].update(data=imgbytes)
+            window['image4'].update(data=imgbytes)
 
         elif event == 'Comparar':
 
@@ -127,8 +146,10 @@ def main():
 
             encodedDefault = cv2.imencode('.png', result[1])[1].tobytes()
             encodedCompared = cv2.imencode('.png', result[0])[1].tobytes()
+            encodedTest = cv2.imencode('.png', result[3])[1].tobytes()
 
             window['image2'].update(data=encodedCompared)
+            window['image4'].update(data=encodedTest)
 
         elif event == 'Salvar':
             ret, frame = cap.read()
