@@ -5,6 +5,7 @@ import cv2
 
 # importing os module
 import os
+import time
 
 # Image path
 cap = cv2.VideoCapture(1)
@@ -25,11 +26,13 @@ print("Before saving image:")
 print(os.listdir(directory))
 
 # Filename
-filename = 'image1.jpg'
+filename = 'image2.jpg'
 
 # Using cv2.imwrite() method
 # Saving the image
+start = time.time()
 cv2.imwrite(filename, frame)
+print("--- %s seconds ---" % (time.time() - start))
 
 # List files and directories
 # in 'C:/Users / Rajnish / Desktop / GeeksforGeeks'

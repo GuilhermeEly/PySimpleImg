@@ -65,5 +65,5 @@ aligned = cv2.imread(r'C:\Users\gely\Desktop\Desenvolvimento\Python\SimplePyImg\
 
 result = compareImages(pattern, aligned)
 
-plt.imshow(result[3], cmap='gray')
+plt.imshow(result[0], cmap='gray')
 plt.show()

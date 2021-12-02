@@ -4,20 +4,71 @@ import PySimpleGUI as sg
 import cv2
 import numpy as np
 import time
+import matplotlib.pyplot as plt
+
+def alignImages(defaultAlign, ComparedImage):
+    # Convert images to grayscale
+    im1_gray = cv2.cvtColor(defaultAlign,cv2.COLOR_BGR2GRAY)
+    im2_gray = cv2.cvtColor(ComparedImage,cv2.COLOR_BGR2GRAY)
+
+    # Find size of image1
+    sz = defaultAlign.shape
+
+    # Define the motion model
+    warp_mode = cv2.MOTION_HOMOGRAPHY
+
+    # Define 2x3 or 3x3 matrices and initialize the matrix to identity
+    if warp_mode == cv2.MOTION_HOMOGRAPHY :
+        warp_matrix = np.eye(3, 3, dtype=np.float32)
+    else :
+        warp_matrix = np.eye(2, 3, dtype=np.float32)
+
+    # Specify the number of iterations.
+    number_of_iterations = 4000
+    
+    # Specify the threshold of the increment
+    # in the correlation coefficient between two iterations
+    termination_eps = (1e-10)
+    
+    # Define termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
+
+    # Run the ECC algorithm. The results are stored in warp_matrix.
+    start = time.time()
+    (cc, warp_matrix) = cv2.findTransformECC (im1_gray,im2_gray,warp_matrix, warp_mode, criteria)
+    print("--- %s seconds ---" % (time.time() - start))
+
+    start = time.time()
+    if warp_mode == cv2.MOTION_HOMOGRAPHY :
+        # Use warpPerspective for Homography
+        im2_aligned = cv2.warpPerspective (ComparedImage, warp_matrix, (sz[1],sz[0]), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+    else :
+        # Use warpAffine for Translation, Euclidean and Affine
+        im2_aligned = cv2.warpAffine(ComparedImage, warp_matrix, (sz[1],sz[0]), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+
+    aligned_gray = cv2.cvtColor(im2_aligned,cv2.COLOR_BGR2RGB)
+
+    return aligned_gray, defaultAlign
 
 def compareImages(DefaultImage, ComparedImage):
     scaledown_percent = 100
 
-    DefaultImageResized = resizeImage(DefaultImage, scaledown_percent)
+    DefaultImageHolder = DefaultImage
 
-    DefaultImage = resizeImage(DefaultImage, scaledown_percent)
-    ComparedImage = resizeImage(ComparedImage, scaledown_percent)
+    #DefaultImage = resizeImage(DefaultImage, scaledown_percent)
+    #ComparedImage = resizeImage(ComparedImage, scaledown_percent)
 
     DefaultBlured = cv2.GaussianBlur(DefaultImage, (5, 5), 0)
     ComparedBlured = cv2.GaussianBlur(ComparedImage, (5, 5), 0)
 
+    print(DefaultBlured.shape)
+    print(ComparedBlured.shape)
+
     DefaultGray = cv2.cvtColor(DefaultBlured, cv2.COLOR_BGR2GRAY)
     ComparedGray = cv2.cvtColor(ComparedBlured, cv2.COLOR_BGR2GRAY)
+
+    #DefaultGray = DefaultBlured
+    #ComparedGray = ComparedBlured
 
     (score, diff) = structural_similarity(DefaultGray, ComparedGray, full=True)
     print("Image similarity", score)
@@ -38,7 +89,7 @@ def compareImages(DefaultImage, ComparedImage):
 
     for c in contours:
         area = cv2.contourArea(c)
-        if area > 250:
+        if area > 30:
             x,y,w,h = cv2.boundingRect(c)
             cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (36,255,12), 2)
             cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (36,255,12), 2)
@@ -51,9 +102,7 @@ def compareImages(DefaultImage, ComparedImage):
 
     upfilled = resizeImage(filled_after, scaleup_percent)
 
-    DefaultImageResized = resizeImage(DefaultImageResized, scaleup_percent)
-
-    return resultCompared, DefaultImageResized, upfilled, diff
+    return resultCompared, DefaultImageHolder, upfilled, diff
 
 def resizeImage(image, percent):
     width = int(image.shape[1] * percent / 100)
@@ -118,7 +167,7 @@ def main():
 
         #Controle de foco pelo slider, caso seja necessário
         #cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
-        cap.set(cv2.CAP_PROP_FOCUS,50)
+        cap.set(cv2.CAP_PROP_FOCUS,80)
         
         if event == 'Sair' or event == sg.WIN_CLOSED:
             return
@@ -138,14 +187,25 @@ def main():
             window['image4'].update(data=imgbytes)
 
         elif event == 'Comparar':
-
+            
+            result = []
             ret, frame = cap.read()
             loadCompare = resizeImage(frame, framescale)
 
-            result = compareImages(loadDefault, loadCompare)
+            encoded = cv2.imencode('.png', loadDefault)[1].tobytes()
+            window['image'].update(data=encoded)
+            patternImage = loadDefault.copy()
+            aligned = alignImages(patternImage, loadCompare)#LoadDefault atualizando sem necessidade, verificar
+
+            loadCompare = aligned[0]
+            Default = aligned[1]
+
+            result = compareImages(Default, loadCompare)
+
+            comparedResult = cv2.cvtColor(result[0], cv2.COLOR_BGR2RGB)
 
             encodedDefault = cv2.imencode('.png', result[1])[1].tobytes()
-            encodedCompared = cv2.imencode('.png', result[0])[1].tobytes()
+            encodedCompared = cv2.imencode('.png', comparedResult)[1].tobytes()
             encodedTest = cv2.imencode('.png', result[3])[1].tobytes()
 
             window['image2'].update(data=encodedCompared)
