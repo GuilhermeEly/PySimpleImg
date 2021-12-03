@@ -78,7 +78,11 @@ def compareImages(DefaultImage, ComparedImage):
     diff = (diff * 255).astype("uint8")
 
     # Retorna uma imagem baseada nos limites estabelecidos
-    thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    # Quando a similaridade é muito alta, o threshold OTSU apresenta resultados ruins 
+    if score >0.99:
+        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV)[1]
+    else:
+        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 
     # Encontra os contornos na imagem
     contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -91,7 +95,7 @@ def compareImages(DefaultImage, ComparedImage):
     # Desenha os contornos das diferenças nas images originais
     for c in contours:
         area = cv2.contourArea(c)
-        if area > 30:
+        if area > 10:
             x,y,w,h = cv2.boundingRect(c)
             cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (36,255,12), 2)
             cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (36,255,12), 2)
@@ -104,7 +108,7 @@ def compareImages(DefaultImage, ComparedImage):
 
     upfilled = resizeImage(filled_after, scaleup_percent)
 
-    return resultCompared, DefaultImageHolder, upfilled, diff
+    return resultCompared, DefaultImageHolder, upfilled, diff, mask
 
 def resizeImage(image, percent):
     width = int(image.shape[1] * percent / 100)
@@ -137,10 +141,15 @@ def main():
             [
                 sg.Image(filename='', key='image2')
             ]]),
-            sg.Frame("Mask", layout = [ 
+            sg.Frame("Diff", layout = [ 
             [
                 sg.Image(filename='', key='image4')
+            ]]),
+            sg.Frame("Mask", layout = [ 
+            [
+                sg.Image(filename='', key='image5')
             ]])
+            
         ],
         [
             sg.Frame("", layout= [
@@ -162,7 +171,7 @@ def main():
 
     #Desligo o foco automático e seto para 50%
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
-    cap.set(cv2.CAP_PROP_FOCUS,50)
+    #cap.set(cv2.CAP_PROP_FOCUS,50)
     recording = False
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
@@ -173,9 +182,9 @@ def main():
         event, values = window.read(timeout=20)
 
         #Controle de foco pelo slider, caso seja necessário
-        #cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
+        cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
         #Seto o foco para 80%
-        cap.set(cv2.CAP_PROP_FOCUS,80)
+        #cap.set(cv2.CAP_PROP_FOCUS,80)
         
         if event == 'Sair' or event == sg.WIN_CLOSED:
             return
@@ -193,6 +202,7 @@ def main():
             window['image2'].update(data=imgbytes)
             window['image3'].update(data=imgbytes)
             window['image4'].update(data=imgbytes)
+            window['image5'].update(data=imgbytes)
 
         #Compara o padrão com a imagem capturada
         elif event == 'Comparar':
@@ -217,19 +227,27 @@ def main():
             #Default = aligned[1]
             
             #Pega valores de referencia da imagem, para as próximas etapas
-            x = 0
-            y = 0
-            w = loadCompare.shape[1]
-            h = loadCompare.shape[0]
+            x = 50
+            y = 50
+            w = loadCompare.shape[1]-50
+            h = loadCompare.shape[0]-50
             thickness = int((Default.shape[1])*0.1)*2
+
+            
+
 
             #Quando a imagem é alinhada, ela gera distorções nas bordas
             #Para ocultar essas distorções eu adiciono uma "moldura" em cima destas distorções
             #Tanto no padrão quanto na imagem a ser comparada
-            loadCompare = cv2.rectangle(loadCompare, (x, y), (x + w, y + h), color, thickness)
+            #loadCompare = cv2.rectangle(loadCompare, (x, y), (x + w, y + h), color, thickness)
+            img = loadCompare
+            loadCompare = img[y:y+h, x:x+w]
+
             w = Default.shape[1]
             h = Default.shape[0]
-            Default = cv2.rectangle(Default, (x, y), (x + w, y + h), color, thickness)
+            #Default = cv2.rectangle(Default, (x, y), (x + w, y + h), color, thickness)
+            img = Default
+            Default = img[y:y+h, x:x+w]
 
             #Realizo a comparacao da imagem capturada com o padrão	
             result = compareImages(Default, loadCompare)
@@ -240,16 +258,26 @@ def main():
             #Faço a conversão para PNG devido ao formato do PySimpleGUI
             encodedDefault = cv2.imencode('.png', result[1])[1].tobytes()
             encodedCompared = cv2.imencode('.png', comparedResult)[1].tobytes()
-            encodedTest = cv2.imencode('.png', result[3])[1].tobytes()
+            encodedDiff = cv2.imencode('.png', result[3])[1].tobytes()
+            encodedMask = cv2.imencode('.png', result[4])[1].tobytes()
 
             #Atualizo a imagem de resultado e a imagem de diferenças
             window['image2'].update(data=encodedCompared)
-            window['image4'].update(data=encodedTest)
+            window['image4'].update(data=encodedDiff)
+            window['image5'].update(data=encodedMask)
 
         #Salva a imagem padrão
         elif event == 'Salvar':
             ret, frame = cap.read()
             loadDefault = resizeImage(frame, framescale)
+
+            x = 70
+            y = 70
+            w = 85
+            h = 85
+
+            loadDefault = cv2.rectangle(loadDefault, (x, y), (w, h), color, -1)
+
             encodedDefault = cv2.imencode('.png', loadDefault)[1].tobytes()
             window['image'].update(data=encodedDefault)
 
