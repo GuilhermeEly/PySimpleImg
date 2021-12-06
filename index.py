@@ -167,7 +167,7 @@ def main():
     window = sg.Window('Image Processing', layout, location=(10, 10))
 
     #Atualizo a câmera que está sendo usada
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
     #Desligo o foco automático e seto para 50%
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
