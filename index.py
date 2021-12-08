@@ -10,6 +10,7 @@ def main():
     sg.theme('Black')
 
     imgProcess = imgProc()
+    imgProcess.loadConfigs()
 
     init = True
     framescale = 50
@@ -75,6 +76,7 @@ def main():
         cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
         
         if event == 'Sair' or event == sg.WIN_CLOSED:
+            imgProcess.saveConfigs()
             return
 
         elif event == 'Camera':
@@ -126,7 +128,7 @@ def main():
         #Salva a imagem padrão
         elif event == 'Salvar':
             ret, frame = cap.read()
-            
+
             loadDefault = imgProcess.resizeImage(frame, framescale)
 
             loadDefault = imgProcess.addCornerSquare(loadDefault, 10, 10, 10)

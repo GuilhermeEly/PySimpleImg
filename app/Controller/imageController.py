@@ -20,6 +20,34 @@ class ImageProcessing():
     def init(self):
         pass    
 
+    def saveConfigs(self):
+        my_json_string = json.dumps(
+            {
+                'minArea': self.minArea, 
+                'imageProcessScale': self.imageProcessScale,
+                'imageShowScale': self.imageShowScale,
+                'iterationNumbers': self.iterationNumbers,
+                'iterationStep': self.iterationStep,
+                'scoreLimit': self.scoreLimit,
+                'rectangleLimitOriginX': self.rectangleLimitOriginX,
+                'rectangleLimitOriginY': self.rectangleLimitOriginY
+            })
+
+        with open('config\imageProcessingConfig.json', 'w') as f:
+            json.dump(my_json_string, f)
+
+    def loadConfigs(self):
+        with open('config\imageProcessingConfig.json', 'r') as f:
+            data = json.load(f)
+            self.minArea = data['minArea']
+            self.imageProcessScale = data['imageProcessScale']
+            self.imageShowScale = data['imageShowScale']
+            self.iterationNumbers = data['iterationNumbers']
+            self.iterationStep = data['iterationStep']
+            self.scoreLimit = data['scoreLimit']
+            self.rectangleLimitOriginX = data['rectangleLimitOriginX']
+            self.rectangleLimitOriginY = data['rectangleLimitOriginY']
+    
     def CropImage(self, image, percentX, percentY):
         x = int((image.shape[1])*percentX/100)-2
         y = int((image.shape[0])*percentY/100)-2

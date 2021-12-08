@@ -1,0 +1,1 @@
+"{\"minArea\": 10, \"imageProcessScale\": 50, \"imageShowScale\": 100, \"iterationNumbers\": 4000, \"iterationStep\": 1e-10, \"scoreLimit\": 0.99, \"rectangleLimitOriginX\": 0, \"rectangleLimitOriginY\": 0}"
