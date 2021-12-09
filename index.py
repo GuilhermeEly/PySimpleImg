@@ -3,13 +3,22 @@ import PySimpleGUI as sg
 import cv2
 import numpy as np
 from app.Controller.imageController import ImageProcessing as imgProc
+from app.Controller.cameraController import CameraController as cam
 
 def main():
 
-    print(cv2.__file__)
     sg.theme('Black')
 
     imgProcess = imgProc()
+    camController = cam()
+
+    availableCam = camController.get_camera_info()
+
+    for camera in availableCam:
+        if camera['camera_name'] == 'HD Pro Webcam C920':
+            indexCam = camera['camera_index']
+            break
+
     imgProcess.loadConfigs()
 
     init = True
@@ -49,16 +58,19 @@ def main():
                 sg.Button('Salvar', size=(10, 1), font='Any 14'),
                 sg.Button('Comparar', size=(10, 1), font='Any 14'),
                 sg.Button('Sair', size=(10, 1), font='Helvetica 14'),
+                sg.Button('Editar', size=(10, 1), font='Any 14'),
                 sg.Slider(range=(1, 100), orientation='h', key='Focus', size=(20, 20), default_value=framescale)
             ]])
         ]
     ]
 
+    
+
     # Crio a janela do programa e passo a localização que ela será exibida no monitor ao abrir
     window = sg.Window('Image Processing', layout, location=(10, 10))
 
     #Atualizo a câmera que está sendo usada
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(indexCam, cv2.CAP_DSHOW)
 
     #Desligo o foco automático e seto para 50%
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
@@ -135,6 +147,35 @@ def main():
 
             encodedDefault = cv2.imencode('.png', loadDefault)[1].tobytes()
             window['image'].update(data=encodedDefault)
+
+        elif event == 'Editar':
+
+            layoutEdit = [
+                [
+                    sg.Frame("Padrão", layout= [
+                    [
+                        sg.Image(filename='', key='image')
+                    ]]),
+                ],
+                [
+                    sg.Frame("", layout= [
+                    [
+                        sg.Slider(range=(1, 100), orientation='h', key='propFocus', size=(20, 20), default_value=framescale),
+                        sg.Button('Salvar', size=(10, 1), font='Helvetica 14'),
+                        sg.Button('Cancelar', size=(10, 1), font='Any 14'),
+                    ]])
+                ]
+            ]
+            windowEdit = sg.Window("Edit Window", layoutEdit, modal=True, location=(10, 10))
+
+            while True:
+                event, values = windowEdit.read()
+                ret, frame = cap.read()
+                if event == "Exit" or event == sg.WIN_CLOSED:
+                    windowEdit.close()
+                    break
+        
+            windowEdit.close()
 
         if recording:
             #Captura de imagem
