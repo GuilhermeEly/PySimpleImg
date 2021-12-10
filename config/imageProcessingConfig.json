@@ -1,1 +1,1 @@
-{"config": [{"minArea": 10, "imageProcessScale": 50, "imageShowScale": 100, "iterationNumbers": 4000, "iterationStep": 1e-10, "scoreLimit": 0.99, "rectangleLimitOriginX": 0, "rectangleLimitOriginY": 0}]}
+{"config": [{"minArea": 10, "imageProcessScale": 50, "imageShowScale": 100, "iterationNumbers": 4000, "iterationStep": 1e-10, "scoreLimit": 0.99, "rectangleLimitOriginX": 87, "rectangleLimitOriginY": 43, "rectangleLimitSizeX": 244, "rectangleLimitSizeY": 139, "focusPercentage": 75.0, "sqrSize": 8}]}

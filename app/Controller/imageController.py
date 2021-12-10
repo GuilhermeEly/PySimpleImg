@@ -1,3 +1,4 @@
+from tkinter.constants import X
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity
@@ -15,10 +16,32 @@ class ImageProcessing():
     scoreLimit = 0.99       # Limite de score para definir o filtro de comparação
     rectangleLimitOriginX = 0
     rectangleLimitOriginY = 0
+    rectangleLimitSizeX = 100
+    rectangleLimitSizeY = 100
+    focusPercentage = 50
+    sqrSize = 8
 
 
     def init(self):
         pass    
+
+    def setFocusPercentage(self, percentage):
+        self.focusPercentage = percentage
+
+    def setRectangleLimitOriginX(self, x):
+        self.rectangleLimitOriginX = x
+
+    def setRectangleLimitOriginY(self, y):
+        self.rectangleLimitOriginY = y
+
+    def setRecatangleSizeX(self, x):
+        self.rectangleLimitSizeX = x
+
+    def setRecatangleSizeY(self, y):
+        self.rectangleLimitSizeY = y
+
+    def setSqrSize(self, size):
+        self.sqrSize = size
 
     def saveConfigs(self):
         data = {}
@@ -26,14 +49,18 @@ class ImageProcessing():
         data['config'] = []
 
         data['config'].append({
-            'minArea': self.minArea,
-            'imageProcessScale': self.imageProcessScale,
-            'imageShowScale': self.imageShowScale,
-            'iterationNumbers': self.iterationNumbers,
-            'iterationStep': self.iterationStep,
-            'scoreLimit': self.scoreLimit,
-            'rectangleLimitOriginX': self.rectangleLimitOriginX,
-            'rectangleLimitOriginY': self.rectangleLimitOriginY
+            'minArea':                  self.minArea,
+            'imageProcessScale':        self.imageProcessScale,
+            'imageShowScale':           self.imageShowScale,
+            'iterationNumbers':         self.iterationNumbers,
+            'iterationStep':            self.iterationStep,
+            'scoreLimit':               self.scoreLimit,
+            'rectangleLimitOriginX':    self.rectangleLimitOriginX,
+            'rectangleLimitOriginY':    self.rectangleLimitOriginY,
+            'rectangleLimitSizeX':      self.rectangleLimitSizeX,
+            'rectangleLimitSizeY':      self.rectangleLimitSizeY,
+            'focusPercentage':          self.focusPercentage,
+            'sqrSize':                  self.sqrSize
         })
 
         with open('config\imageProcessingConfig.json', 'w') as f:
@@ -45,14 +72,19 @@ class ImageProcessing():
 
         try:
             for config in data['config']:
-                self.minArea = config['minArea']
-                self.imageProcessScale = config['imageProcessScale']
-                self.imageShowScale = config['imageShowScale']
-                self.iterationNumbers = config['iterationNumbers']
-                self.iterationStep = config['iterationStep']
-                self.scoreLimit = config['scoreLimit']
-                self.rectangleLimitOriginX = config['rectangleLimitOriginX']
-                self.rectangleLimitOriginY = config['rectangleLimitOriginY']
+                self.minArea =                  config['minArea']
+                self.imageProcessScale =        config['imageProcessScale']
+                self.imageShowScale =           config['imageShowScale']
+                self.iterationNumbers =         config['iterationNumbers']
+                self.iterationStep =            config['iterationStep']
+                self.scoreLimit =               config['scoreLimit']
+                self.rectangleLimitOriginX =    config['rectangleLimitOriginX']
+                self.rectangleLimitOriginY =    config['rectangleLimitOriginY']
+                self.rectangleLimitSizeX =      config['rectangleLimitSizeX']
+                self.rectangleLimitSizeY =      config['rectangleLimitSizeY']
+                self.focusPercentage =          config['focusPercentage']
+                self.sqrSize =                  config['sqrSize']
+
         except Exception as e:
             print("Não foi possível carregar as configurações salvas, usando as padrões\n" + str(e))
     
@@ -63,6 +95,22 @@ class ImageProcessing():
         h = image.shape[0] - y
 
         return image[y:h, x:w]
+
+    def addCropRectangleTest(self, image):
+        x0 = self.rectangleLimitOriginX
+        y0 = self.rectangleLimitOriginY
+        x1 = self.rectangleLimitSizeX
+        y1 = self.rectangleLimitSizeY
+
+        centerX = int((x1-x0)/2) + x0
+        centerY = int((y1-y0)/2) + y0
+
+        markSize = 15
+
+        cv2.line(image,(centerX-markSize,centerY),(centerX+markSize,centerY),(0,255,255),1)
+        cv2.line(image,(centerX,centerY-markSize),(centerX,centerY+markSize),(0,255,255),1)
+        
+        return cv2.rectangle(image, (x0, y0), (x1, y1), (0,255,255), 2)
     
     def addCropRectangle(self, image, percentX, percentY):
         x = int((image.shape[1])*percentX/100)-2
@@ -74,6 +122,16 @@ class ImageProcessing():
         cv2.line(image,(int(w/2),int(h/2)-15),(int(w/2),int(h/2)+15),(0,255,255),1)
         
         return cv2.rectangle(image, (x, y), (-x + w, -y + h), (0,255,255), 2)
+
+    def addCornerSquareTest(self, image):
+        color = [0,0,0]
+
+        x0 = self.rectangleLimitOriginX
+        y0 = self.rectangleLimitOriginY
+        x1 = self.rectangleLimitOriginX + self.sqrSize
+        y1 = self.rectangleLimitOriginY + self.sqrSize
+
+        return cv2.rectangle(image, (x0, y0), (x1, y1), color, -1)
 
     def addCornerSquare(self, image, percentX, percentY, squareSize):
         color = [0,0,0] # black

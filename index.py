@@ -7,7 +7,7 @@ from app.Controller.cameraController import CameraController as cam
 
 def main():
 
-    sg.theme('Black')
+    sg.theme('DarkAmber')
 
     imgProcess = imgProc()
     camController = cam()
@@ -58,13 +58,10 @@ def main():
                 sg.Button('Salvar', size=(10, 1), font='Any 14'),
                 sg.Button('Comparar', size=(10, 1), font='Any 14'),
                 sg.Button('Sair', size=(10, 1), font='Helvetica 14'),
-                sg.Button('Editar', size=(10, 1), font='Any 14'),
-                sg.Slider(range=(1, 100), orientation='h', key='Focus', size=(20, 20), default_value=framescale)
+                sg.Button('Editar', size=(10, 1), font='Any 14')
             ]])
         ]
     ]
-
-    
 
     # Crio a janela do programa e passo a localização que ela será exibida no monitor ao abrir
     window = sg.Window('Image Processing', layout, location=(10, 10))
@@ -85,7 +82,7 @@ def main():
         event, values = window.read(timeout=20)
 
         #Controle de foco pelo slider, caso seja necessário
-        cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
+        cap.set(cv2.CAP_PROP_FOCUS,imgProcess.focusPercentage)
         
         if event == 'Sair' or event == sg.WIN_CLOSED:
             imgProcess.saveConfigs()
@@ -152,29 +149,88 @@ def main():
 
             layoutEdit = [
                 [
-                    sg.Frame("Padrão", layout= [
+                    sg.Frame("Edit", layout= [
                     [
-                        sg.Image(filename='', key='image')
+                        sg.Image(filename='', key='editImage')
+                    ]]),
+                    sg.Frame("Opções", layout= [
+                    [
+                        sg.Column(layout=[
+                            [sg.Text("Origem")],
+                            [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='originX', size=(30, 20), default_value=0)],
+                            [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='originY', size=(30, 20), default_value=0)],
+                            [sg.Text("Tamanho")],
+                            [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='sizeX', size=(30, 20), default_value=50)],
+                            [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='sizeY', size=(30, 20), default_value=50)],
+                            [sg.Text("Foco")],
+                            [sg.Text("%"), sg.Slider(range=(0, 100), orientation='h', key='editFocus', size=(30, 20), default_value=50)],
+                        ], size=(300, 350)),
+                        
                     ]]),
                 ],
                 [
                     sg.Frame("", layout= [
                     [
-                        sg.Slider(range=(1, 100), orientation='h', key='propFocus', size=(20, 20), default_value=framescale),
                         sg.Button('Salvar', size=(10, 1), font='Helvetica 14'),
-                        sg.Button('Cancelar', size=(10, 1), font='Any 14'),
                     ]])
                 ]
             ]
             windowEdit = sg.Window("Edit Window", layoutEdit, modal=True, location=(10, 10))
 
+            first = True
+
             while True:
-                event, values = windowEdit.read()
-                ret, frame = cap.read()
-                if event == "Exit" or event == sg.WIN_CLOSED:
+
+                event, values = windowEdit.read(timeout=20)
+
+                if first:
+                    first = False
+                    windowEdit['sizeX'].update(imgProcess.rectangleLimitSizeX)
+                    windowEdit['sizeY'].update(imgProcess.rectangleLimitSizeY)
+                    windowEdit['originX'].update(imgProcess.rectangleLimitOriginX)
+                    windowEdit['originY'].update(imgProcess.rectangleLimitOriginY)
+                    windowEdit['editFocus'].update(imgProcess.focusPercentage)
+                    
+
+                if event == "Salvar" or event == sg.WIN_CLOSED:
+                    imgProcess.saveConfigs()
                     windowEdit.close()
                     break
-        
+                
+                imgProcess.setRecatangleSizeX(int(values['sizeX']))
+                imgProcess.setRecatangleSizeY(int(values['sizeY']))
+                imgProcess.setRectangleLimitOriginX(int(values['originX']))
+                imgProcess.setRectangleLimitOriginY(int(values['originY']))
+
+                ret, frame = cap.read()
+                frame = imgProcess.resizeImage(frame, framescale)
+
+                sliderSizeX = windowEdit['sizeX']
+                sliderSizeY = windowEdit['sizeY']
+                sliderOriginX = windowEdit['originX']
+                sliderOriginY = windowEdit['originY']
+
+                if values['originX'] >= values['sizeX']:
+                    windowEdit['originX'].update(values['sizeX']-1)
+
+                if values['originY'] >= values['sizeY']:
+                    windowEdit['originY'].update(values['sizeY']-1)
+
+                sliderSizeX.Update(range=(0, frame.shape[1]))
+                sliderSizeY.Update(range=(0, frame.shape[0]))
+                sliderOriginX.Update(range=(0, (frame.shape[1]-10)))
+                sliderOriginY.Update(range=(0, frame.shape[0]))
+
+                cap.set(cv2.CAP_PROP_FOCUS,values['editFocus'])
+                imgProcess.setFocusPercentage(values['editFocus'])
+
+                frame = imgProcess.addCropRectangleTest(frame)
+
+                frame = imgProcess.addCornerSquareTest(frame)
+
+                frame = cv2.imencode('.png', frame)[1].tobytes()
+                windowEdit['editImage'].update(data=frame)
+
             windowEdit.close()
 
         if recording:
