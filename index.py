@@ -123,8 +123,8 @@ def main():
 
             loadCompare, Default = imgProcess.alignImages(patternImage, loadCompare)
 
-            loadCompare = imgProcess.CropImage(loadCompare, 10, 10)
-            Default = imgProcess.CropImage(Default, 10, 10)
+            loadCompare = imgProcess.CropImage(loadCompare)
+            Default = imgProcess.CropImage(Default)
 
             #Realizo a comparacao da imagem capturada com o padrão	
             encodedCompared, encodedDefault, encodedUpFilled, encodedDiff, encodedMask = imgProcess.compareImages(Default, loadCompare)
@@ -140,7 +140,7 @@ def main():
 
             loadDefault = imgProcess.resizeImage(frame, framescale)
 
-            loadDefault = imgProcess.addCornerSquare(loadDefault, 10, 10, 10)
+            loadDefault = imgProcess.addCornerSquare(loadDefault)
 
             encodedDefault = cv2.imencode('.png', loadDefault)[1].tobytes()
             window['image'].update(data=encodedDefault)
@@ -224,9 +224,8 @@ def main():
                 cap.set(cv2.CAP_PROP_FOCUS,values['editFocus'])
                 imgProcess.setFocusPercentage(values['editFocus'])
 
-                frame = imgProcess.addCropRectangleTest(frame)
-
-                frame = imgProcess.addCornerSquareTest(frame)
+                frame = imgProcess.addCornerSquare(frame)
+                frame = imgProcess.addCropRectangle(frame)
 
                 frame = cv2.imencode('.png', frame)[1].tobytes()
                 windowEdit['editImage'].update(data=frame)
@@ -240,9 +239,9 @@ def main():
             #Redimensiona a imagem
             frame = imgProcess.resizeImage(frame, framescale)
 
-            frame = imgProcess.addCornerSquare(frame, 10, 10, 10)
+            frame = imgProcess.addCornerSquare(frame)
 
-            frame = imgProcess.addCropRectangle(frame, 10, 10)
+            frame = imgProcess.addCropRectangle(frame)
 
             #Faz o encode da image para PNG, devido ao PySimpleGUI
             imgbytes = cv2.imencode('.png', frame)[1].tobytes()

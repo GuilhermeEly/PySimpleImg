@@ -10,7 +10,7 @@ class ImageProcessing():
     #Default Values
     minArea = 10
     imageProcessScale = 50
-    imageShowScale = 100
+    imageShowScale = 300
     iterationNumbers = 4000 # Número de iteracoes para o algoritmo de alinhamento
     iterationStep = (1e-10) # Limite de incremento entre duas iteracoes
     scoreLimit = 0.99       # Limite de score para definir o filtro de comparação
@@ -88,15 +88,17 @@ class ImageProcessing():
         except Exception as e:
             print("Não foi possível carregar as configurações salvas, usando as padrões\n" + str(e))
     
-    def CropImage(self, image, percentX, percentY):
-        x = int((image.shape[1])*percentX/100)-2
-        y = int((image.shape[0])*percentY/100)-2
-        w = image.shape[1] - x
-        h = image.shape[0] - y
 
-        return image[y:h, x:w]
+    def CropImage(self, image):
+        x0 = self.rectangleLimitOriginX
+        y0 = self.rectangleLimitOriginY
+        x1 = self.rectangleLimitSizeX
+        y1 = self.rectangleLimitSizeY
 
-    def addCropRectangleTest(self, image):
+        return image[y0:y1, x0:x1]
+
+
+    def addCropRectangle(self, image):
         x0 = self.rectangleLimitOriginX
         y0 = self.rectangleLimitOriginY
         x1 = self.rectangleLimitSizeX
@@ -111,19 +113,8 @@ class ImageProcessing():
         cv2.line(image,(centerX,centerY-markSize),(centerX,centerY+markSize),(0,255,255),1)
         
         return cv2.rectangle(image, (x0, y0), (x1, y1), (0,255,255), 2)
-    
-    def addCropRectangle(self, image, percentX, percentY):
-        x = int((image.shape[1])*percentX/100)-2
-        y = int((image.shape[0])*percentY/100)-2
-        w = image.shape[1]
-        h = image.shape[0]
 
-        cv2.line(image,(int(w/2)-15,int(h/2)),(int(w/2)+15,int(h/2)),(0,255,255),1)
-        cv2.line(image,(int(w/2),int(h/2)-15),(int(w/2),int(h/2)+15),(0,255,255),1)
-        
-        return cv2.rectangle(image, (x, y), (-x + w, -y + h), (0,255,255), 2)
-
-    def addCornerSquareTest(self, image):
+    def addCornerSquare(self, image):
         color = [0,0,0]
 
         x0 = self.rectangleLimitOriginX
@@ -132,16 +123,6 @@ class ImageProcessing():
         y1 = self.rectangleLimitOriginY + self.sqrSize
 
         return cv2.rectangle(image, (x0, y0), (x1, y1), color, -1)
-
-    def addCornerSquare(self, image, percentX, percentY, squareSize):
-        color = [0,0,0] # black
-
-        x = int((image.shape[1])*percentX/100)-2
-        y = int((image.shape[0])*percentY/100)-2
-        w = (int((image.shape[1])*percentX/100)-2) + squareSize
-        h = (int((image.shape[0])*percentY/100)-2) + squareSize
-
-        return cv2.rectangle(image, (x, y), (w, h), color, -1)
 
     def resizeImage(self, image, percent):
         width = int(image.shape[1] * percent / 100)
