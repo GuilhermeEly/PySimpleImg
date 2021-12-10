@@ -10,7 +10,7 @@ class ImageProcessing():
     #Default Values
     minArea = 10
     imageProcessScale = 50
-    imageShowScale = 300
+    imageShowScale = 250
     iterationNumbers = 4000 # Número de iteracoes para o algoritmo de alinhamento
     iterationStep = (1e-10) # Limite de incremento entre duas iteracoes
     scoreLimit = 0.99       # Limite de score para definir o filtro de comparação
@@ -187,10 +187,10 @@ class ImageProcessing():
 
         # Retorna uma imagem baseada nos limites estabelecidos
         # Quando a similaridade é muito alta, o threshold OTSU apresenta resultados ruins 
-        if score > self.scoreLimit:
-            thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV)[1]
-        else:
-            thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        # if score > self.scoreLimit:
+        #     thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV)[1]
+        # else:
+        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 
         # Encontra os contornos na imagem
         contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -205,14 +205,14 @@ class ImageProcessing():
             area = cv2.contourArea(c)
             if area > self.minArea:
                 x,y,w,h = cv2.boundingRect(c)
-                cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (36,255,12), 2)
-                cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (36,255,12), 2)
+                cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 1)
+                cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 1)
                 cv2.drawContours(mask, [c], 0, (0,255,0), -1)
                 cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
         scaleup_percent = self.imageShowScale # percent of original size
 
-        resultCompared = self.resizeImage(ComparedImage, scaleup_percent)
+        resultCompared = self.resizeImage(ComparedImage, 200)
 
         upfilled = self.resizeImage(filled_after, scaleup_percent)
 
