@@ -70,9 +70,9 @@ def main():
     #Atualizo a câmera que está sendo usada
     cap = cv2.VideoCapture(indexCam, cv2.CAP_DSHOW)
 
-    #Desligo o foco automático e seto para 50%
+    #Desligo o foco automático
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
-    #cap.set(cv2.CAP_PROP_FOCUS,50)
+
     recording = False
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
@@ -168,8 +168,14 @@ def main():
                             [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='sizeX', size=(30, 20), default_value=50)],
                             [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='sizeY', size=(30, 20), default_value=50)],
                             [sg.Text("Foco")],
-                            [sg.Text("%"), sg.Slider(range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size=(30, 20), default_value=50)],
-                        ], size=(300, 350)),
+                            [sg.Text("F:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size=(30, 20), default_value=50)],
+                            [sg.Text("Brilho")],
+                            [sg.Text("B:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editBrightness', size=(30, 15), default_value=50)],
+                            [sg.Text("Contraste")],
+                            [sg.Text("C:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editContrast', size=(30, 15), default_value=50)],
+                            [sg.Text("Saturação")],
+                            [sg.Text("S:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editSaturation', size=(30, 15), default_value=50)],
+                        ], size=(300, 650)),
                         
                     ]]),
                 ],
@@ -195,6 +201,9 @@ def main():
                     windowEdit['originX'].update(imgProcess.rectangleLimitOriginX)
                     windowEdit['originY'].update(imgProcess.rectangleLimitOriginY)
                     windowEdit['editFocus'].update(imgProcess.focusPercentage)
+                    windowEdit['editBrightness'].update(imgProcess.brightness)
+                    windowEdit['editContrast'].update(imgProcess.contrast)
+                    windowEdit['editSaturation'].update(imgProcess.saturation)
                     
 
                 if event == "Salvar" or event == sg.WIN_CLOSED:
@@ -206,7 +215,7 @@ def main():
                 imgProcess.setRecatangleSizeY(int(values['sizeY']))
                 imgProcess.setRectangleLimitOriginX(int(values['originX']))
                 imgProcess.setRectangleLimitOriginY(int(values['originY']))
-
+                cap.set(cv2.CAP_PROP_EXPOSURE, -6)
                 ret, frame = cap.read()
                 frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
@@ -228,6 +237,12 @@ def main():
 
                 cap.set(cv2.CAP_PROP_FOCUS,values['editFocus'])
                 imgProcess.setFocusPercentage(values['editFocus'])
+                cap.set(cv2.CAP_PROP_BRIGHTNESS,values['editBrightness'])
+                imgProcess.setBrightness(values['editBrightness'])
+                cap.set(cv2.CAP_PROP_CONTRAST,values['editContrast'])
+                imgProcess.setContrast(values['editContrast'])
+                cap.set(cv2.CAP_PROP_SATURATION,values['editSaturation'])
+                imgProcess.setSaturation(values['editSaturation'])
 
                 frame = imgProcess.addCornerSquare(frame)
                 frame = imgProcess.addCropRectangle(frame)

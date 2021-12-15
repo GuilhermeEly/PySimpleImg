@@ -20,7 +20,7 @@ import json
 class ImageProcessing():
 
     #Default Values
-    minArea = 10
+    minArea = 5
     imageProcessScale = 50
     imageShowScale = 250
     # 1000 iterações com 1e-10 apresenta resultado satisfatorio ( ~ 30 segundos)
@@ -33,6 +33,9 @@ class ImageProcessing():
     rectangleLimitSizeY = 100
     focusPercentage = 50
     sqrSize = 8
+    brightness = 50
+    contrast = 50
+    saturation = 50
 
 
     def init(self):
@@ -40,6 +43,15 @@ class ImageProcessing():
 
     def setFocusPercentage(self, percentage):
         self.focusPercentage = percentage
+
+    def setBrightness(self, brightness):
+        self.brightness = brightness
+
+    def setContrast(self, contrast):
+        self.contrast = contrast
+
+    def setSaturation(self, saturation):
+        self.saturation = saturation
 
     def setRectangleLimitOriginX(self, x):
         self.rectangleLimitOriginX = x
@@ -73,7 +85,10 @@ class ImageProcessing():
             'rectangleLimitSizeX':      self.rectangleLimitSizeX,
             'rectangleLimitSizeY':      self.rectangleLimitSizeY,
             'focusPercentage':          self.focusPercentage,
-            'sqrSize':                  self.sqrSize
+            'sqrSize':                  self.sqrSize,
+            'brightness':               self.brightness,
+            'contrast':                 self.contrast,
+            'saturation':               self.saturation
         })
 
         with open('config\imageProcessingConfig.json', 'w') as f:
@@ -97,6 +112,9 @@ class ImageProcessing():
                 self.rectangleLimitSizeY =      config['rectangleLimitSizeY']
                 self.focusPercentage =          config['focusPercentage']
                 self.sqrSize =                  config['sqrSize']
+                self.brightness =               config['brightness']
+                self.contrast =                 config['contrast']
+                self.saturation =               config['saturation']
 
         except Exception as e:
             print("Não foi possível carregar as configurações salvas, usando as padrões\n" + str(e))
