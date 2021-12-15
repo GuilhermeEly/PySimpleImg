@@ -4,6 +4,18 @@ import numpy as np
 from skimage.metrics import structural_similarity
 import json
 
+# CAP_PROP_FRAME_WIDTH  # width        
+# CAP_PROP_FRAME_HEIGHT # height       
+# CAP_PROP_BRIGHTNESS   # brightness     min: 0   , max: 255 , increment:1  
+# CAP_PROP_CONTRAST     # contrast       min: 0   , max: 255 , increment:1     
+# CAP_PROP_SATURATION   # saturation     min: 0   , max: 255 , increment:1
+# cam.set(13, 13   )    # hue         
+# CAP_PROP_GAIN         # gain           min: 0   , max: 127 , increment:1
+# CAP_PROP_EXPOSURE     # exposure       min: -7  , max: -1  , increment:1
+# CAP_PROP_WHITE_BALANCE_BLUE_U     # white_balance  min: 4000, max: 7000, increment:1
+# CAP_PROP_FOCUS        # focus          min: 0   , max: 255 , increment:5
+# CAP_PROP_AUTOFOCUS    # toggle auto focus     min:0 , max:1
+
 
 class ImageProcessing():
 
@@ -11,8 +23,9 @@ class ImageProcessing():
     minArea = 10
     imageProcessScale = 50
     imageShowScale = 250
-    iterationNumbers = 4000 # Número de iteracoes para o algoritmo de alinhamento
-    iterationStep = (1e-10) # Limite de incremento entre duas iteracoes
+    # 1000 iterações com 1e-10 apresenta resultado satisfatorio ( ~ 30 segundos)
+    iterationNumbers = 4000 # Número de iteracoes para o algoritmo de alinhamento # Original: 4000
+    iterationStep = (1e-10) # Limite de incremento entre duas iteracoes # Original (1e-10)
     scoreLimit = 0.99       # Limite de score para definir o filtro de comparação
     rectangleLimitOriginX = 0
     rectangleLimitOriginY = 0
@@ -212,7 +225,7 @@ class ImageProcessing():
 
         scaleup_percent = self.imageShowScale # percent of original size
 
-        resultCompared = self.resizeImage(ComparedImage, 200)
+        resultCompared = self.resizeImage(ComparedImage, self.imageShowScale)
 
         upfilled = self.resizeImage(filled_after, scaleup_percent)
 

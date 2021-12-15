@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from app.Controller.imageController import ImageProcessing as imgProc
 from app.Controller.cameraController import CameraController as cam
+import time
 
 def main():
 
@@ -110,7 +111,7 @@ def main():
             ret, frame = cap.read()
 
             #Redimensiona a imagem para facilitar a comparação
-            loadCompare = imgProcess.resizeImage(frame, framescale)
+            loadCompare = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
             #Faz a conversão para PNG devido ao formato do PySimpleGUI
             encoded = cv2.imencode('.png', loadDefault)[1].tobytes()
@@ -120,15 +121,19 @@ def main():
 
             #Passo uma cópia do padrão para realizar a comparação sem alterar o padrão original
             patternImage = loadDefault.copy()
-
-            loadCompare, Default = imgProcess.alignImages(patternImage, loadCompare)
-
+            start_time = time.time()
+            patternImage = imgProcess.CropImage(patternImage)
             loadCompare = imgProcess.CropImage(loadCompare)
-            Default = imgProcess.CropImage(Default)
+            loadCompare, Default = imgProcess.alignImages(patternImage, loadCompare)
+            print("Alinhamento--- %s seconds ---" % (time.time() - start_time))
 
+            #loadCompare = imgProcess.CropImage(loadCompare)
+            #Default = imgProcess.CropImage(Default)
+
+            start_time = time.time()
             #Realizo a comparacao da imagem capturada com o padrão	
             encodedCompared, encodedDefault, encodedUpFilled, encodedDiff, encodedMask = imgProcess.compareImages(Default, loadCompare)
-
+            print("Comparação--- %s seconds ---" % (time.time() - start_time))
             #Atualizo a imagem de resultado e a imagem de diferenças
             window['image2'].update(data=encodedCompared)
             window['image4'].update(data=encodedDiff)
@@ -138,7 +143,7 @@ def main():
         elif event == 'Salvar':
             ret, frame = cap.read()
 
-            loadDefault = imgProcess.resizeImage(frame, framescale)
+            loadDefault = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
             loadDefault = imgProcess.addCornerSquare(loadDefault)
 
@@ -163,7 +168,7 @@ def main():
                             [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='sizeX', size=(30, 20), default_value=50)],
                             [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='sizeY', size=(30, 20), default_value=50)],
                             [sg.Text("Foco")],
-                            [sg.Text("%"), sg.Slider(range=(0, 100), orientation='h', key='editFocus', size=(30, 20), default_value=50)],
+                            [sg.Text("%"), sg.Slider(range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size=(30, 20), default_value=50)],
                         ], size=(300, 350)),
                         
                     ]]),
@@ -203,7 +208,7 @@ def main():
                 imgProcess.setRectangleLimitOriginY(int(values['originY']))
 
                 ret, frame = cap.read()
-                frame = imgProcess.resizeImage(frame, framescale)
+                frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
                 sliderSizeX = windowEdit['sizeX']
                 sliderSizeY = windowEdit['sizeY']
@@ -237,7 +242,7 @@ def main():
             ret, frame = cap.read()
 
             #Redimensiona a imagem
-            frame = imgProcess.resizeImage(frame, framescale)
+            frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
             frame = imgProcess.addCornerSquare(frame)
 
