@@ -15,6 +15,7 @@ import json
 # CAP_PROP_WHITE_BALANCE_BLUE_U     # white_balance  min: 4000, max: 7000, increment:1
 # CAP_PROP_FOCUS        # focus          min: 0   , max: 255 , increment:5
 # CAP_PROP_AUTOFOCUS    # toggle auto focus     min:0 , max:1
+# CAP_PROP_AUTO_EXPOSURE # toggle auto exposure  min:0 , max:1
 
 
 class ImageProcessing():
@@ -121,10 +122,16 @@ class ImageProcessing():
     
 
     def CropImage(self, image):
-        x0 = self.rectangleLimitOriginX
-        y0 = self.rectangleLimitOriginY
-        x1 = self.rectangleLimitSizeX
-        y1 = self.rectangleLimitSizeY
+
+        x0 = int((self.rectangleLimitOriginX * 100) / self.imageProcessScale)
+        y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale)
+        x1 = int((self.rectangleLimitSizeX * 100) / self.imageProcessScale)
+        y1 = int((self.rectangleLimitSizeY * 100) / self.imageProcessScale)
+
+        # x0 = self.rectangleLimitOriginX
+        # y0 = self.rectangleLimitOriginY
+        # x1 = self.rectangleLimitSizeX
+        # y1 = self.rectangleLimitSizeY
 
         return image[y0:y1, x0:x1]
 
@@ -148,10 +155,15 @@ class ImageProcessing():
     def addCornerSquare(self, image):
         color = [0,0,0]
 
-        x0 = self.rectangleLimitOriginX
-        y0 = self.rectangleLimitOriginY
-        x1 = self.rectangleLimitOriginX + self.sqrSize
-        y1 = self.rectangleLimitOriginY + self.sqrSize
+        x0 = int((self.rectangleLimitOriginX * 100) / self.imageProcessScale)
+        y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale)
+        x1 = x0 + self.sqrSize
+        y1 = y0 + self.sqrSize
+
+        # x0 = self.rectangleLimitOriginX
+        # y0 = self.rectangleLimitOriginY
+        # x1 = self.rectangleLimitOriginX + self.sqrSize
+        # y1 = self.rectangleLimitOriginY + self.sqrSize
 
         return cv2.rectangle(image, (x0, y0), (x1, y1), color, -1)
 
@@ -236,16 +248,23 @@ class ImageProcessing():
             area = cv2.contourArea(c)
             if area > self.minArea:
                 x,y,w,h = cv2.boundingRect(c)
-                cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 1)
-                cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 1)
+                cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 2)
+                cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 2)
                 cv2.drawContours(mask, [c], 0, (0,255,0), -1)
                 cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
-        scaleup_percent = self.imageShowScale # percent of original size
+        # Calculo a porcentagem para chegar numa imagem com height de 350px
+        scale = int((350*100)/DefaultImage.shape[0])
 
-        resultCompared = self.resizeImage(ComparedImage, self.imageShowScale)
+        resultCompared = self.resizeImage(ComparedImage, scale)
 
-        upfilled = self.resizeImage(filled_after, scaleup_percent)
+        upfilled = self.resizeImage(filled_after, scale)
+
+        DefaultImageHolder = self.resizeImage(DefaultImageHolder, scale)
+
+        diff = self.resizeImage(diff, scale)
+
+        mask = self.resizeImage(mask, scale)
 
         resultCompared = cv2.cvtColor(resultCompared, cv2.COLOR_BGR2RGB)
 

@@ -69,9 +69,14 @@ def main():
 
     #Atualizo a câmera que está sendo usada
     cap = cv2.VideoCapture(indexCam, cv2.CAP_DSHOW)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
     #Desligo o foco automático
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
+    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE,0)
+    cap.set(cv2.CAP_PROP_EXPOSURE, -5)
+    print(cap.get(cv2.CAP_PROP_FPS))
 
     recording = False
 
@@ -111,10 +116,10 @@ def main():
             ret, frame = cap.read()
 
             #Redimensiona a imagem para facilitar a comparação
-            loadCompare = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
+            loadCompare = frame
 
             #Faz a conversão para PNG devido ao formato do PySimpleGUI
-            encoded = cv2.imencode('.png', loadDefault)[1].tobytes()
+            encoded = cv2.imencode('.png', loadDefaulttest)[1].tobytes()
 
             #Atualiza a imagem do padrão
             window['image'].update(data=encoded)
@@ -143,12 +148,14 @@ def main():
         elif event == 'Salvar':
             ret, frame = cap.read()
 
-            loadDefault = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
+            loadDefault = imgProcess.addCornerSquare(frame)
 
-            loadDefault = imgProcess.addCornerSquare(loadDefault)
+            loadDefaulttest = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
-            encodedDefault = cv2.imencode('.png', loadDefault)[1].tobytes()
-            window['image'].update(data=encodedDefault)
+            #loadDefaulttest = imgProcess.addCornerSquare(loadDefaulttest)
+
+            encodedDefaulttest = cv2.imencode('.png', loadDefaulttest)[1].tobytes()
+            window['image'].update(data=encodedDefaulttest)
 
         elif event == 'Editar':
 
@@ -215,7 +222,7 @@ def main():
                 imgProcess.setRecatangleSizeY(int(values['sizeY']))
                 imgProcess.setRectangleLimitOriginX(int(values['originX']))
                 imgProcess.setRectangleLimitOriginY(int(values['originY']))
-                cap.set(cv2.CAP_PROP_EXPOSURE, -6)
+                
                 ret, frame = cap.read()
                 frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
@@ -244,7 +251,7 @@ def main():
                 cap.set(cv2.CAP_PROP_SATURATION,values['editSaturation'])
                 imgProcess.setSaturation(values['editSaturation'])
 
-                frame = imgProcess.addCornerSquare(frame)
+                #frame = imgProcess.addCornerSquare(frame)
                 frame = imgProcess.addCropRectangle(frame)
 
                 frame = cv2.imencode('.png', frame)[1].tobytes()
@@ -259,7 +266,7 @@ def main():
             #Redimensiona a imagem
             frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
-            frame = imgProcess.addCornerSquare(frame)
+            #frame = imgProcess.addCornerSquare(frame)
 
             frame = imgProcess.addCropRectangle(frame)
 

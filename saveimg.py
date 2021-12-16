@@ -6,11 +6,28 @@ import cv2
 # importing os module
 import os
 import time
+from app.Controller.cameraController import CameraController as cam
 
+camController = cam()
+
+availableCam = camController.get_camera_info()
+
+for camera in availableCam:
+    if camera['camera_name'] == 'HD Pro Webcam C920':
+        indexCam = camera['camera_index']
+        break
 # Image path
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(indexCam, cv2.CAP_DSHOW)
+
+
+
+
 cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
-cap.set(cv2.CAP_PROP_FOCUS,60)
+cap.set(cv2.CAP_PROP_FOCUS,30)
+
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
 ret, frame = cap.read()
 # Image directory
 directory = r'C:\Users\gely\Desktop\Desenvolvimento\Python\SimplePyImg\images'
@@ -40,3 +57,8 @@ print("After saving image:")
 print(os.listdir(directory))
 
 print('Successfully saved')
+
+w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+print(w,h)
