@@ -5,6 +5,52 @@ import numpy as np
 from app.Controller.imageController import ImageProcessing as imgProc
 from app.Controller.cameraController import CameraController as cam
 import time
+import matplotlib.pyplot as plt
+
+def alignImages(defaultAlign, ComparedImage):
+    # Converte imagens para escala de cinza
+    im1_gray = cv2.cvtColor(defaultAlign,cv2.COLOR_BGR2GRAY)
+    im2_gray = cv2.cvtColor(ComparedImage,cv2.COLOR_BGR2GRAY)
+
+    # Retorna o tamanho da imagem
+    sz = defaultAlign.shape
+
+    # Define o algoritmo de alinhamento
+    warp_mode = cv2.MOTION_HOMOGRAPHY
+
+    # Define a matriz inicial de alinhamento conforme a necessidade do algoritmo escolhido
+    if warp_mode == cv2.MOTION_HOMOGRAPHY :
+        warp_matrix = np.eye(3, 3, dtype=np.float32)
+    else :
+        warp_matrix = np.eye(2, 3, dtype=np.float32)
+
+    # Número de iteracoes para o algoritmo de alinhamento
+    number_of_iterations = 4000
+    
+    # Limite de incremento entre duas iteracoes
+    termination_eps = (1e-10)
+    
+    # Definição de critérios
+    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
+
+    # Roda o algoritmo, retornando a matriz de alinhamento em warp_matrix
+    start = time.time()
+    (cc, warp_matrix) = cv2.findTransformECC (im1_gray,im2_gray,warp_matrix, warp_mode, criteria)
+    print("--- %s seconds ---" % (time.time() - start))
+
+    start = time.time()
+    #Realinha a imagem original conforme a matriz de alinhamento
+    if warp_mode == cv2.MOTION_HOMOGRAPHY :
+        # Usa warpPerspective para Homography
+        im2_aligned = cv2.warpPerspective (ComparedImage, warp_matrix, (sz[1],sz[0]), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+    else :
+        # Usa warpAffine para Translation, Euclidean and Affine
+        im2_aligned = cv2.warpAffine(ComparedImage, warp_matrix, (sz[1],sz[0]), flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+
+    #Converte o resultado de BGR para RGB
+    aligned_gray = cv2.cvtColor(im2_aligned,cv2.COLOR_BGR2RGB)
+
+    return aligned_gray, defaultAlign
 
 def main():
 
