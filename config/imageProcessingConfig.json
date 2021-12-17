@@ -1,0 +1,21 @@
+{
+    "config": [
+        {
+            "minArea": 20,
+            "imageProcessScale": 25,
+            "imageShowScale": 100,
+            "iterationNumbers": 500,
+            "iterationStep": 1e-08,
+            "scoreLimit": 0.99,
+            "rectangleLimitOriginX": 157,
+            "rectangleLimitOriginY": 101,
+            "rectangleLimitSizeX": 332,
+            "rectangleLimitSizeY": 214,
+            "focusPercentage": 25.0,
+            "sqrSize": 5,
+            "brightness": 127.0,
+            "contrast": 127.0,
+            "saturation": 127.0
+        }
+    ]
+}

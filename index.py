@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from skimage.metrics import structural_similarity
 import PySimpleGUI as sg
 import cv2
 import numpy as np
+from app.Controller.imageController import ImageProcessing as imgProc
+from app.Controller.cameraController import CameraController as cam
 import time
 import matplotlib.pyplot as plt
 
@@ -51,75 +52,24 @@ def alignImages(defaultAlign, ComparedImage):
 
     return aligned_gray, defaultAlign
 
-def compareImages(DefaultImage, ComparedImage):
-    scaledown_percent = 100
-
-    DefaultImageHolder = DefaultImage
-
-    #DefaultImage = resizeImage(DefaultImage, scaledown_percent)
-    #ComparedImage = resizeImage(ComparedImage, scaledown_percent)
-
-    # Aplica um filtro gaussiano nas imagens para diminuir a quantidade de detalhes
-    DefaultBlured = cv2.GaussianBlur(DefaultImage, (5, 5), 0)
-    ComparedBlured = cv2.GaussianBlur(ComparedImage, (5, 5), 0)
-
-    # Converte as imagens para escala de cinza
-    DefaultGray = cv2.cvtColor(DefaultBlured, cv2.COLOR_BGR2GRAY)
-    ComparedGray = cv2.cvtColor(ComparedBlured, cv2.COLOR_BGR2GRAY)
-
-    #DefaultGray = DefaultBlured
-    #ComparedGray = ComparedBlured
-
-    # Calcula a similaridade entre as imagens
-    (score, diff) = structural_similarity(DefaultGray, ComparedGray, full=True)
-    print("Image similarity", score)
-
-    # Converte a matriz de 0 e 1 para uma de 0 e 255
-    diff = (diff * 255).astype("uint8")
-
-    # Retorna uma imagem baseada nos limites estabelecidos
-    # Quando a similaridade é muito alta, o threshold OTSU apresenta resultados ruins 
-    if score >0.99:
-        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV)[1]
-    else:
-        thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-
-    # Encontra os contornos na imagem
-    contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Cria a máscara de diferenças
-    contours = contours[0] if len(contours) == 2 else contours[1]
-    mask = np.zeros(DefaultBlured.shape, dtype='uint8')
-    filled_after = ComparedBlured.copy()
-
-    # Desenha os contornos das diferenças nas images originais
-    for c in contours:
-        area = cv2.contourArea(c)
-        if area > 10:
-            x,y,w,h = cv2.boundingRect(c)
-            cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (36,255,12), 2)
-            cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (36,255,12), 2)
-            cv2.drawContours(mask, [c], 0, (0,255,0), -1)
-            cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
-
-    scaleup_percent = 100 # percent of original size
-
-    resultCompared = resizeImage(ComparedImage, scaleup_percent)
-
-    upfilled = resizeImage(filled_after, scaleup_percent)
-
-    return resultCompared, DefaultImageHolder, upfilled, diff, mask
-
-def resizeImage(image, percent):
-    width = int(image.shape[1] * percent / 100)
-    height = int(image.shape[0] * percent / 100)
-    dim = (width, height)
-    return cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
-
 def main():
 
-    print(cv2.__file__)
-    sg.theme('Black')
+    sg.theme('DarkAmber')
+
+    imgProcess = imgProc()
+    camController = cam()
+
+    availableCam = camController.get_camera_info()
+
+    for camera in availableCam:
+        if camera['camera_name'] == 'HD Pro Webcam C920':
+            indexCam = camera['camera_index']
+            break
+    
+    try:
+        imgProcess.loadConfigs()
+    except:
+        print('Configs not found, using default')
 
     init = True
     framescale = 50
@@ -158,7 +108,7 @@ def main():
                 sg.Button('Salvar', size=(10, 1), font='Any 14'),
                 sg.Button('Comparar', size=(10, 1), font='Any 14'),
                 sg.Button('Sair', size=(10, 1), font='Helvetica 14'),
-                sg.Slider(range=(1, 100), orientation='h', key='Focus', size=(20, 20), default_value=framescale)
+                sg.Button('Editar', size=(10, 1), font='Any 14')
             ]])
         ]
     ]
@@ -167,11 +117,16 @@ def main():
     window = sg.Window('Image Processing', layout, location=(10, 10))
 
     #Atualizo a câmera que está sendo usada
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(indexCam, cv2.CAP_DSHOW)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
-    #Desligo o foco automático e seto para 50%
+    #Desligo o foco automático
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
-    #cap.set(cv2.CAP_PROP_FOCUS,50)
+    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE,0)
+    cap.set(cv2.CAP_PROP_EXPOSURE, -5)
+    print(cap.get(cv2.CAP_PROP_FPS))
+
     recording = False
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
@@ -182,11 +137,10 @@ def main():
         event, values = window.read(timeout=20)
 
         #Controle de foco pelo slider, caso seja necessário
-        cap.set(cv2.CAP_PROP_FOCUS,values['Focus'])
-        #Seto o foco para 80%
-        #cap.set(cv2.CAP_PROP_FOCUS,80)
+        cap.set(cv2.CAP_PROP_FOCUS,imgProcess.focusPercentage)
         
         if event == 'Sair' or event == sg.WIN_CLOSED:
+            imgProcess.saveConfigs()
             return
 
         elif event == 'Camera':
@@ -211,56 +165,29 @@ def main():
             ret, frame = cap.read()
 
             #Redimensiona a imagem para facilitar a comparação
-            loadCompare = resizeImage(frame, framescale)
+            loadCompare = frame
 
             #Faz a conversão para PNG devido ao formato do PySimpleGUI
-            encoded = cv2.imencode('.png', loadDefault)[1].tobytes()
+            encoded = cv2.imencode('.png', loadDefaulttest)[1].tobytes()
 
             #Atualiza a imagem do padrão
             window['image'].update(data=encoded)
 
             #Passo uma cópia do padrão para realizar a comparação sem alterar o padrão original
             patternImage = loadDefault.copy()
-            #aligned = alignImages(patternImage, loadCompare)
-            loadCompare, Default = alignImages(patternImage, loadCompare)
-            #loadCompare = aligned[0]
-            #Default = aligned[1]
-            
-            #Pega valores de referencia da imagem, para as próximas etapas
-            x = 50
-            y = 50
-            w = loadCompare.shape[1]-50
-            h = loadCompare.shape[0]-50
-            thickness = int((Default.shape[1])*0.1)*2
+            start_time = time.time()
+            patternImage = imgProcess.CropImage(patternImage)
+            loadCompare = imgProcess.CropImage(loadCompare)
+            loadCompare, Default = imgProcess.alignImages(patternImage, loadCompare)
+            print("Alinhamento--- %s seconds ---" % (time.time() - start_time))
 
-            
+            #loadCompare = imgProcess.CropImage(loadCompare)
+            #Default = imgProcess.CropImage(Default)
 
-
-            #Quando a imagem é alinhada, ela gera distorções nas bordas
-            #Para ocultar essas distorções eu adiciono uma "moldura" em cima destas distorções
-            #Tanto no padrão quanto na imagem a ser comparada
-            #loadCompare = cv2.rectangle(loadCompare, (x, y), (x + w, y + h), color, thickness)
-            img = loadCompare
-            loadCompare = img[y:y+h, x:x+w]
-
-            w = Default.shape[1]
-            h = Default.shape[0]
-            #Default = cv2.rectangle(Default, (x, y), (x + w, y + h), color, thickness)
-            img = Default
-            Default = img[y:y+h, x:x+w]
-
+            start_time = time.time()
             #Realizo a comparacao da imagem capturada com o padrão	
-            result = compareImages(Default, loadCompare)
-
-            #Converto de BGR para RGB
-            comparedResult = cv2.cvtColor(result[0], cv2.COLOR_BGR2RGB)
-
-            #Faço a conversão para PNG devido ao formato do PySimpleGUI
-            encodedDefault = cv2.imencode('.png', result[1])[1].tobytes()
-            encodedCompared = cv2.imencode('.png', comparedResult)[1].tobytes()
-            encodedDiff = cv2.imencode('.png', result[3])[1].tobytes()
-            encodedMask = cv2.imencode('.png', result[4])[1].tobytes()
-
+            encodedCompared, encodedDefault, encodedUpFilled, encodedDiff, encodedMask = imgProcess.compareImages(Default, loadCompare)
+            print("Comparação--- %s seconds ---" % (time.time() - start_time))
             #Atualizo a imagem de resultado e a imagem de diferenças
             window['image2'].update(data=encodedCompared)
             window['image4'].update(data=encodedDiff)
@@ -269,41 +196,132 @@ def main():
         #Salva a imagem padrão
         elif event == 'Salvar':
             ret, frame = cap.read()
-            loadDefault = resizeImage(frame, framescale)
 
-            x = 70
-            y = 70
-            w = 85
-            h = 85
+            loadDefault = imgProcess.addCornerSquare(frame)
 
-            loadDefault = cv2.rectangle(loadDefault, (x, y), (w, h), color, -1)
+            loadDefaulttest = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
-            encodedDefault = cv2.imencode('.png', loadDefault)[1].tobytes()
-            window['image'].update(data=encodedDefault)
+            #loadDefaulttest = imgProcess.addCornerSquare(loadDefaulttest)
+
+            encodedDefaulttest = cv2.imencode('.png', loadDefaulttest)[1].tobytes()
+            window['image'].update(data=encodedDefaulttest)
+
+        elif event == 'Editar':
+
+            layoutEdit = [
+                [
+                    sg.Frame("Edit", layout= [
+                    [
+                        sg.Image(filename='', key='editImage')
+                    ]]),
+                    sg.Frame("Opções", layout= [
+                    [
+                        sg.Column(layout=[
+                            [sg.Text("Origem")],
+                            [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='originX', size=(30, 20), default_value=0)],
+                            [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='originY', size=(30, 20), default_value=0)],
+                            [sg.Text("Tamanho")],
+                            [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='sizeX', size=(30, 20), default_value=50)],
+                            [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='sizeY', size=(30, 20), default_value=50)],
+                            [sg.Text("Foco")],
+                            [sg.Text("F:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size=(30, 20), default_value=50)],
+                            [sg.Text("Brilho")],
+                            [sg.Text("B:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editBrightness', size=(30, 15), default_value=50)],
+                            [sg.Text("Contraste")],
+                            [sg.Text("C:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editContrast', size=(30, 15), default_value=50)],
+                            [sg.Text("Saturação")],
+                            [sg.Text("S:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editSaturation', size=(30, 15), default_value=50)],
+                        ], size=(300, 650)),
+                        
+                    ]]),
+                ],
+                [
+                    sg.Frame("", layout= [
+                    [
+                        sg.Button('Salvar', size=(10, 1), font='Helvetica 14'),
+                    ]])
+                ]
+            ]
+            windowEdit = sg.Window("Edit Window", layoutEdit, modal=True, location=(10, 10))
+
+            first = True
+
+            while True:
+
+                event, values = windowEdit.read(timeout=20)
+
+                if first:
+                    first = False
+                    windowEdit['sizeX'].update(imgProcess.rectangleLimitSizeX)
+                    windowEdit['sizeY'].update(imgProcess.rectangleLimitSizeY)
+                    windowEdit['originX'].update(imgProcess.rectangleLimitOriginX)
+                    windowEdit['originY'].update(imgProcess.rectangleLimitOriginY)
+                    windowEdit['editFocus'].update(imgProcess.focusPercentage)
+                    windowEdit['editBrightness'].update(imgProcess.brightness)
+                    windowEdit['editContrast'].update(imgProcess.contrast)
+                    windowEdit['editSaturation'].update(imgProcess.saturation)
+                    
+
+                if event == "Salvar" or event == sg.WIN_CLOSED:
+                    imgProcess.saveConfigs()
+                    windowEdit.close()
+                    break
+                
+                imgProcess.setRecatangleSizeX(int(values['sizeX']))
+                imgProcess.setRecatangleSizeY(int(values['sizeY']))
+                imgProcess.setRectangleLimitOriginX(int(values['originX']))
+                imgProcess.setRectangleLimitOriginY(int(values['originY']))
+                
+                ret, frame = cap.read()
+                frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
+
+                sliderSizeX = windowEdit['sizeX']
+                sliderSizeY = windowEdit['sizeY']
+                sliderOriginX = windowEdit['originX']
+                sliderOriginY = windowEdit['originY']
+
+                if values['originX'] >= values['sizeX']:
+                    windowEdit['originX'].update(values['sizeX']-1)
+
+                if values['originY'] >= values['sizeY']:
+                    windowEdit['originY'].update(values['sizeY']-1)
+
+                sliderSizeX.Update(range=(0, frame.shape[1]))
+                sliderSizeY.Update(range=(0, frame.shape[0]))
+                sliderOriginX.Update(range=(0, (frame.shape[1]-10)))
+                sliderOriginY.Update(range=(0, frame.shape[0]))
+
+                cap.set(cv2.CAP_PROP_FOCUS,values['editFocus'])
+                imgProcess.setFocusPercentage(values['editFocus'])
+                cap.set(cv2.CAP_PROP_BRIGHTNESS,values['editBrightness'])
+                imgProcess.setBrightness(values['editBrightness'])
+                cap.set(cv2.CAP_PROP_CONTRAST,values['editContrast'])
+                imgProcess.setContrast(values['editContrast'])
+                cap.set(cv2.CAP_PROP_SATURATION,values['editSaturation'])
+                imgProcess.setSaturation(values['editSaturation'])
+
+                #frame = imgProcess.addCornerSquare(frame)
+                frame = imgProcess.addCropRectangle(frame)
+
+                frame = cv2.imencode('.png', frame)[1].tobytes()
+                windowEdit['editImage'].update(data=frame)
+
+            windowEdit.close()
 
         if recording:
             #Captura de imagem
             ret, frame = cap.read()
 
             #Redimensiona a imagem
-            frame = resizeImage(frame, framescale)
+            frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
-            #Pega os valores de referência para as próximas etapas
-            x = int((frame.shape[1])*0.1)-2
-            y = int((frame.shape[1])*0.1)-2
-            w = frame.shape[1]
-            h = frame.shape[0]
+            #frame = imgProcess.addCornerSquare(frame)
 
-            #Cria um retângulo na região válida da imagem
-            cv2.rectangle(frame, (x, y), (-x + w, -y + h), (0,255,255), 2)
-
-            #Cria um X no centro da imagem
-            cv2.line(frame,(int(w/2)-15,int(h/2)),(int(w/2)+15,int(h/2)),(0,255,255),1)
-            cv2.line(frame,(int(w/2),int(h/2)-15),(int(w/2),int(h/2)+15),(0,255,255),1)
+            frame = imgProcess.addCropRectangle(frame)
 
             #Faz o encode da image para PNG, devido ao PySimpleGUI
             imgbytes = cv2.imencode('.png', frame)[1].tobytes()
-            
+
             #Atualiza a imagem na tela
             window['image3'].update(data=imgbytes)
 
