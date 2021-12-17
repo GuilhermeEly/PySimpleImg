@@ -19,8 +19,11 @@ def main():
         if camera['camera_name'] == 'HD Pro Webcam C920':
             indexCam = camera['camera_index']
             break
-
-    imgProcess.loadConfigs()
+    
+    try:
+        imgProcess.loadConfigs()
+    except:
+        print('Configs not found, using default')
 
     init = True
     framescale = 50

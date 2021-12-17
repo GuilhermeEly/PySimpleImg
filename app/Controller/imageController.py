@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from skimage.metrics import structural_similarity
 import json
+import os
 
 # CAP_PROP_FRAME_WIDTH  # width        
 # CAP_PROP_FRAME_HEIGHT # height       
@@ -25,18 +26,18 @@ class ImageProcessing():
     imageProcessScale = 50
     imageShowScale = 250
     # 1000 iterações com 1e-10 apresenta resultado satisfatorio ( ~ 30 segundos)
-    iterationNumbers = 4000 # Número de iteracoes para o algoritmo de alinhamento # Original: 4000
+    iterationNumbers = 1000 # Número de iteracoes para o algoritmo de alinhamento # Original: 4000
     iterationStep = (1e-10) # Limite de incremento entre duas iteracoes # Original (1e-10)
     scoreLimit = 0.99       # Limite de score para definir o filtro de comparação
     rectangleLimitOriginX = 0
     rectangleLimitOriginY = 0
     rectangleLimitSizeX = 100
     rectangleLimitSizeY = 100
-    focusPercentage = 50
-    sqrSize = 8
-    brightness = 50
-    contrast = 50
-    saturation = 50
+    focusPercentage = 25
+    sqrSize = 5
+    brightness = 127
+    contrast = 127
+    saturation = 127
 
 
     def init(self):
@@ -92,8 +93,10 @@ class ImageProcessing():
             'saturation':               self.saturation
         })
 
-        with open('config\imageProcessingConfig.json', 'w') as f:
-            json.dump(data, f)
+        filename = 'config\imageProcessingConfig.json'
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, 'w+') as f:
+            json.dump(data, f, indent=4)
 
     def loadConfigs(self):
         with open('config\imageProcessingConfig.json', 'r') as f:
