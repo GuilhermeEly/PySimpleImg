@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import os
+#Para usar o backend da microsoft sem que demore para abrir o software
+os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import PySimpleGUI as sg
 import cv2
 import numpy as np
@@ -13,12 +16,7 @@ def main():
     imgProcess = imgProc()
     camController = cam()
 
-    availableCam = camController.get_camera_info()
-
-    for camera in availableCam:
-        if camera['camera_name'] == 'HD Pro Webcam C920':
-            indexCam = camera['camera_index']
-            break
+    indexCam = camController.get_camera_info()
     
     try:
         imgProcess.loadConfigs()
@@ -69,22 +67,28 @@ def main():
     window = sg.Window('Image Processing', layout, location=(10, 10))
 
     #Atualizo a câmera que está sendo usada
-    cap = cv2.VideoCapture(indexCam, cv2.CAP_DSHOW)
+    #CAP_MSMF consegue 30 fps e ajustar white balance
+    cap = cv2.VideoCapture(indexCam, cv2.CAP_MSMF)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
+    #Por algum motivo especifico, a câmera nao ajusta as configurações sem que antes 
+    #seja realizada uma captura, portanto:
+    cap.read()
     #Desligo o foco automático
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
-    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE,0)
+    #Desligo a exposição automática
+    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE,0.25)
+    #Seto para menor exposição possível 10e-7
     cap.set(cv2.CAP_PROP_EXPOSURE, -5)
-    print(cap.get(cv2.CAP_PROP_FPS))
+    #Seto a temperatura da imagem para um valor fixo, forçando sair do automático
+    cap.set(cv2.CAP_PROP_TEMPERATURE, 3333)
 
     recording = False
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
 
     while True:
-        
         #Verifico os eventos do GUI
         event, values = window.read(timeout=20)
 
@@ -153,6 +157,10 @@ def main():
             window['image'].update(data=encodedDefaulttest)
 
         elif event == 'Editar':
+            sliderSize = (30, 5)
+            textSize = (10, 1)
+            textConf = 'Helvetica 8 italic'
+            titleTextConfig = 'Helvetica 8 bold'
 
             layoutEdit = [
                 [
@@ -162,22 +170,43 @@ def main():
                     ]]),
                     sg.Frame("Opções", layout= [
                     [
-                        sg.Column(layout=[
-                            [sg.Text("Origem")],
-                            [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='originX', size=(30, 20), default_value=0)],
-                            [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='originY', size=(30, 20), default_value=0)],
-                            [sg.Text("Tamanho")],
-                            [sg.Text("X"), sg.Slider(range=(0, 10000), orientation='h', key='sizeX', size=(30, 20), default_value=50)],
-                            [sg.Text("Y"), sg.Slider(range=(0, 10000), orientation='h', key='sizeY', size=(30, 20), default_value=50)],
-                            [sg.Text("Foco")],
-                            [sg.Text("F:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size=(30, 20), default_value=50)],
-                            [sg.Text("Brilho")],
-                            [sg.Text("B:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editBrightness', size=(30, 15), default_value=50)],
-                            [sg.Text("Contraste")],
-                            [sg.Text("C:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editContrast', size=(30, 15), default_value=50)],
-                            [sg.Text("Saturação")],
-                            [sg.Text("S:"), sg.Slider(range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editSaturation', size=(30, 15), default_value=50)],
-                        ], size=(300, 650)),
+                        sg.Column(layout=
+                        [
+                            [
+                                sg.Text("Área válida", font = titleTextConfig)
+                            ],
+                            [
+                                sg.Text("X0:", font = textConf, s = textSize),
+                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='originX', size = sliderSize, default_value=0),
+                                sg.Text("X1:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='sizeX', size = sliderSize, default_value=50),
+                            ],
+                            [
+                                sg.Text("Y0:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='originY', size = sliderSize, default_value=0),
+                                sg.Text("Y1:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='sizeY', size = sliderSize, default_value=50),
+                            ],
+                            [
+                                sg.Text("Configurações", font = titleTextConfig)
+                            ],
+                            [
+                                sg.Text("Foco:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size = sliderSize, default_value=50),
+                                sg.Text("Brilho:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editBrightness', size = sliderSize, default_value=50)
+                            ],
+                            [
+                                sg.Text("Contraste:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editContrast', size = sliderSize, default_value=50),
+                                sg.Text("Saturação:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editSaturation', size = sliderSize, default_value=50)
+                            ],
+                            [
+                                sg.Text("Erro:", font = textConf, s = textSize), 
+                                sg.Slider(font = textConf, range=(0, 100), tick_interval=20, orientation='h', key='editArea', size = sliderSize, default_value=50)
+                            ],
+                        ], size=(600, 280)),
                         
                     ]]),
                 ],
@@ -206,6 +235,7 @@ def main():
                     windowEdit['editBrightness'].update(imgProcess.brightness)
                     windowEdit['editContrast'].update(imgProcess.contrast)
                     windowEdit['editSaturation'].update(imgProcess.saturation)
+                    windowEdit['editArea'].update(imgProcess.minArea)
                     
 
                 if event == "Salvar" or event == sg.WIN_CLOSED:
@@ -245,6 +275,7 @@ def main():
                 imgProcess.setContrast(values['editContrast'])
                 cap.set(cv2.CAP_PROP_SATURATION,values['editSaturation'])
                 imgProcess.setSaturation(values['editSaturation'])
+                imgProcess.setMinArea(values['editArea'])
 
                 frame = imgProcess.addCropRectangle(frame)
 

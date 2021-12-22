@@ -12,6 +12,8 @@ VIDEO_DEVICES = 4
 
 class CameraController:
 
+    desiredCamName = "HD Pro Webcam C920"
+
     def __init__(self):
         self.cameras = []
 
@@ -44,15 +46,19 @@ class CameraController:
     def add_camera_information(self, camera_indexes: list) -> list:
         platform_name = platform.system()
         cameras = []
+        index = None
 
         if platform_name == 'Windows':
             cameras_info_windows = asyncio.run(self.get_camera_information_for_windows())
 
             for camera_index in camera_indexes:
                 camera_name = cameras_info_windows.get_at(camera_index).name.replace('\n', '')
-                cameras.append({'camera_index': camera_index, 'camera_name': camera_name})
+                if camera_name == self.desiredCamName:
+                    cameras.append({'camera_index': camera_index, 'camera_name': camera_name})
+                    index = camera_index
+                    break
 
-            return cameras
+            return index
 
         if platform_name == 'Linux':
             for camera_index in camera_indexes:

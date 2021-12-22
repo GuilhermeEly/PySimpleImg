@@ -41,7 +41,10 @@ class ImageProcessing():
 
 
     def init(self):
-        pass    
+        pass   
+
+    def setMinArea(self, minArea):
+        self.minArea = minArea 
 
     def setFocusPercentage(self, percentage):
         self.focusPercentage = percentage
@@ -99,10 +102,11 @@ class ImageProcessing():
             json.dump(data, f, indent=4)
 
     def loadConfigs(self):
-        with open('config\imageProcessingConfig.json', 'r') as f:
-            data = json.load(f)
 
         try:
+            with open('config\imageProcessingConfig.json', 'r') as f:
+                data = json.load(f)
+
             for config in data['config']:
                 self.minArea =                  config['minArea']
                 self.imageProcessScale =        config['imageProcessScale']
@@ -156,7 +160,7 @@ class ImageProcessing():
         return cv2.rectangle(image, (x0, y0), (x1, y1), (0,255,255), 2)
 
     def addCornerSquare(self, image):
-        color = [0,0,0]
+        color = [28, 28, 27]
 
         x0 = int((self.rectangleLimitOriginX * 100) / self.imageProcessScale)
         y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale)
@@ -217,8 +221,8 @@ class ImageProcessing():
         DefaultImageHolder = DefaultImage
 
         # Aplica um filtro gaussiano nas imagens para diminuir a quantidade de detalhes
-        DefaultBlured = cv2.GaussianBlur(DefaultImage, (5, 5), 0)
-        ComparedBlured = cv2.GaussianBlur(ComparedImage, (5, 5), 0)
+        DefaultBlured = cv2.GaussianBlur(DefaultImage, (3, 3), 0)
+        ComparedBlured = cv2.GaussianBlur(ComparedImage, (3, 3), 0)
 
         # Converte as imagens para escala de cinza
         DefaultGray = cv2.cvtColor(DefaultBlured, cv2.COLOR_BGR2GRAY)
@@ -231,11 +235,6 @@ class ImageProcessing():
         # Converte a matriz de 0 e 1 para uma de 0 e 255
         diff = (diff * 255).astype("uint8")
 
-        # Retorna uma imagem baseada nos limites estabelecidos
-        # Quando a similaridade é muito alta, o threshold OTSU apresenta resultados ruins 
-        # if score > self.scoreLimit:
-        #     thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV)[1]
-        # else:
         thresh = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 
         # Encontra os contornos na imagem
