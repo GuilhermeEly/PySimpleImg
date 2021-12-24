@@ -8,6 +8,8 @@ import numpy as np
 from app.Controller.imageController import ImageProcessing as imgProc
 from app.Controller.cameraController import CameraController as cam
 import time
+from app.Views.editView import EditView as edtView
+from app.Views.mainView import MainView as mView
 
 def main():
 
@@ -15,6 +17,8 @@ def main():
 
     imgProcess = imgProc()
     camController = cam()
+    editView = edtView()
+    mainView = mView()
 
     indexCam = camController.get_camera_info()
     
@@ -25,46 +29,8 @@ def main():
 
     init = True
 
-    layout = [
-        [
-            sg.Frame("Padrão", layout= [
-            [
-                sg.Image(filename='', key='image')
-            ]]),
-            sg.Frame("Feedback", layout = [ 
-            [
-                sg.Image(filename='', key='image3')
-            ]])      
-        ],
-        [
-            sg.Frame("Diferenças", layout = [ 
-            [
-                sg.Image(filename='', key='image2')
-            ]]),
-            sg.Frame("Diff", layout = [ 
-            [
-                sg.Image(filename='', key='image4')
-            ]]),
-            sg.Frame("Mask", layout = [ 
-            [
-                sg.Image(filename='', key='image5')
-            ]])
-            
-        ],
-        [
-            sg.Frame("", layout= [
-            [
-                sg.Button('Camera', size=(10, 1), font='Helvetica 14'),
-                sg.Button('Salvar', size=(10, 1), font='Any 14'),
-                sg.Button('Comparar', size=(10, 1), font='Any 14'),
-                sg.Button('Sair', size=(10, 1), font='Helvetica 14'),
-                sg.Button('Editar', size=(10, 1), font='Any 14')
-            ]])
-        ]
-    ]
-
     # Crio a janela do programa e passo a localização que ela será exibida no monitor ao abrir
-    window = sg.Window('Image Processing', layout, location=(10, 10))
+    window = mainView.create_window()
 
     #Atualizo a câmera que está sendo usada
     #CAP_MSMF consegue 30 fps e ajustar white balance
@@ -157,67 +123,8 @@ def main():
             window['image'].update(data=encodedDefaulttest)
 
         elif event == 'Editar':
-            sliderSize = (30, 5)
-            textSize = (10, 1)
-            textConf = 'Helvetica 8 italic'
-            titleTextConfig = 'Helvetica 8 bold'
-
-            layoutEdit = [
-                [
-                    sg.Frame("Edit", layout= [
-                    [
-                        sg.Image(filename='', key='editImage')
-                    ]]),
-                    sg.Frame("Opções", layout= [
-                    [
-                        sg.Column(layout=
-                        [
-                            [
-                                sg.Text("Área válida", font = titleTextConfig)
-                            ],
-                            [
-                                sg.Text("X0:", font = textConf, s = textSize),
-                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='originX', size = sliderSize, default_value=0),
-                                sg.Text("X1:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='sizeX', size = sliderSize, default_value=50),
-                            ],
-                            [
-                                sg.Text("Y0:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='originY', size = sliderSize, default_value=0),
-                                sg.Text("Y1:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 10000), tick_interval=100, orientation='h', key='sizeY', size = sliderSize, default_value=50),
-                            ],
-                            [
-                                sg.Text("Configurações", font = titleTextConfig)
-                            ],
-                            [
-                                sg.Text("Foco:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=5,  orientation='h', key='editFocus', size = sliderSize, default_value=50),
-                                sg.Text("Brilho:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editBrightness', size = sliderSize, default_value=50)
-                            ],
-                            [
-                                sg.Text("Contraste:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editContrast', size = sliderSize, default_value=50),
-                                sg.Text("Saturação:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 255), tick_interval=51, resolution=1,  orientation='h', key='editSaturation', size = sliderSize, default_value=50)
-                            ],
-                            [
-                                sg.Text("Erro:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 100), tick_interval=20, orientation='h', key='editArea', size = sliderSize, default_value=50)
-                            ],
-                        ], size=(600, 280)),
-                        
-                    ]]),
-                ],
-                [
-                    sg.Frame("", layout= [
-                    [
-                        sg.Button('Salvar', size=(10, 1), font='Helvetica 14'),
-                    ]])
-                ]
-            ]
-            windowEdit = sg.Window("Edit Window", layoutEdit, modal=True, location=(10, 10))
+            
+            windowEdit = editView.create_window()
 
             first = True
 
