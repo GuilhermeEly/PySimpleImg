@@ -39,6 +39,7 @@ class ImageProcessing():
     brightness = 127
     contrast = 127
     saturation = 127
+    debug = False
 
 
     def init(self):
@@ -74,6 +75,9 @@ class ImageProcessing():
     def setSqrSize(self, size):
         self.sqrSize = size
 
+    def setDebug(self, debug):
+        self.debug = debug
+
     def saveConfigs(self):
         data = {}
 
@@ -94,7 +98,8 @@ class ImageProcessing():
             'sqrSize':                  self.sqrSize,
             'brightness':               self.brightness,
             'contrast':                 self.contrast,
-            'saturation':               self.saturation
+            'saturation':               self.saturation,
+            'debug':                    self.debug
         })
 
         filename = 'config\imageProcessingConfig.json'
@@ -124,6 +129,7 @@ class ImageProcessing():
                 self.brightness =               config['brightness']
                 self.contrast =                 config['contrast']
                 self.saturation =               config['saturation']
+                self.debug =                    config['debug']
 
         except Exception as e:
             print("Não foi possível carregar as configurações salvas, usando as padrões\n" + str(e))
@@ -135,11 +141,6 @@ class ImageProcessing():
         y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale)
         x1 = int((self.rectangleLimitSizeX * 100) / self.imageProcessScale)
         y1 = int((self.rectangleLimitSizeY * 100) / self.imageProcessScale)
-
-        # x0 = self.rectangleLimitOriginX
-        # y0 = self.rectangleLimitOriginY
-        # x1 = self.rectangleLimitSizeX
-        # y1 = self.rectangleLimitSizeY
 
         return image[y0:y1, x0:x1]
 
@@ -167,11 +168,6 @@ class ImageProcessing():
         y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale)
         x1 = x0 + self.sqrSize
         y1 = y0 + self.sqrSize
-
-        # x0 = self.rectangleLimitOriginX
-        # y0 = self.rectangleLimitOriginY
-        # x1 = self.rectangleLimitOriginX + self.sqrSize
-        # y1 = self.rectangleLimitOriginY + self.sqrSize
 
         return cv2.rectangle(image, (x0, y0), (x1, y1), color, -1)
 

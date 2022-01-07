@@ -66,4 +66,4 @@ class EditView:
         return layoutEdit
 
     def create_window(self):
-        return sg.Window('Editar Imagem', layout=self.buildLayout(), modal=True, location=(10, 10))
+        return sg.Window('Editar Imagem', layout=self.buildLayout(), modal=True, location=(0, 0))
