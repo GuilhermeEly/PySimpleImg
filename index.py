@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 from app.Controller.imageController import ImageProcessing as imgProc
 from app.Controller.cameraController import CameraController as cam
-import time
 from app.Views.editView import EditView as edtView
 from app.Views.mainView import MainView as mView
 
@@ -24,7 +23,7 @@ def main():
     
     try:
         imgProcess.loadConfigs()
-    except:
+    except Exception as e:
         print('Configs not found, using default')
 
     init = True

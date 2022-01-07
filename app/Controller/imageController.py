@@ -1,4 +1,3 @@
-from tkinter.constants import X
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity
@@ -23,19 +22,19 @@ import time
 class ImageProcessing():
 
     #Default Values
-    minArea = 5
-    imageProcessScale = 50
-    imageShowScale = 250
-    # 1000 iterações com 1e-10 apresenta resultado satisfatorio ( ~ 30 segundos)
-    iterationNumbers = 1000 # Número de iteracoes para o algoritmo de alinhamento # Original: 4000
-    iterationStep = (1e-10) # Limite de incremento entre duas iteracoes # Original (1e-10)
+    minArea = 10
+    imageProcessScale = 25
+    imageShowScale = 100
+    # 500 iterações com 1e-08 apresenta resultado satisfatorio ( ~ 8 segundos)
+    iterationNumbers = 500 # Número de iteracoes para o algoritmo de alinhamento # Original: 4000
+    iterationStep = (1e-08) # Limite de incremento entre duas iteracoes # Original (1e-10)
     scoreLimit = 0.99       # Limite de score para definir o filtro de comparação
     rectangleLimitOriginX = 0
     rectangleLimitOriginY = 0
     rectangleLimitSizeX = 100
     rectangleLimitSizeY = 100
     focusPercentage = 25
-    sqrSize = 5
+    sqrSize = 30
     brightness = 127
     contrast = 127
     saturation = 127
