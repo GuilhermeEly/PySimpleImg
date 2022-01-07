@@ -4,6 +4,7 @@ import numpy as np
 from skimage.metrics import structural_similarity
 import json
 import os
+import time
 
 # CAP_PROP_FRAME_WIDTH  # width        
 # CAP_PROP_FRAME_HEIGHT # height       
@@ -277,6 +278,23 @@ class ImageProcessing():
         mask = cv2.imencode('.png', mask)[1].tobytes()
 
         return resultCompared, DefaultImageHolder, upfilled, diff, mask
+
+    def executeComparison(self, DefaultImage, ComparedImage):
+        start_time = time.time()
+
+        DefaultImage = self.CropImage(DefaultImage)
+        ComparedImage = self.CropImage(ComparedImage)
+        
+        ComparedImage, Default = self.alignImages(DefaultImage, ComparedImage)
+        print("Alinhamento--- %s seconds ---" % (time.time() - start_time))
+
+        start_time = time.time()
+        #Realizo a comparacao da imagem capturada com o padrão	
+        encodedCompared, encodedDefault, encodedUpFilled, encodedDiff, encodedMask = self.compareImages(Default, ComparedImage)
+        print("Comparação--- %s seconds ---" % (time.time() - start_time))
+        #Atualizo a imagem de resultado e a imagem de diferenças
+
+        return encodedCompared, encodedDiff, encodedMask
 
     def delete(self):
         pass

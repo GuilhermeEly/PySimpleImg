@@ -88,25 +88,8 @@ def main():
             #Redimensiona a imagem para facilitar a comparação
             loadCompare = frame
 
-            #Faz a conversão para PNG devido ao formato do PySimpleGUI
-            encoded = cv2.imencode('.png', loadDefaulttest)[1].tobytes()
+            encodedCompared, encodedDiff, encodedMask = imgProcess.executeComparison(loadDefault.copy(), loadCompare.copy())
 
-            #Atualiza a imagem do padrão
-            window['image'].update(data=encoded)
-
-            #Passo uma cópia do padrão para realizar a comparação sem alterar o padrão original
-            patternImage = loadDefault.copy()
-            start_time = time.time()
-            patternImage = imgProcess.CropImage(patternImage)
-            loadCompare = imgProcess.CropImage(loadCompare)
-            loadCompare, Default = imgProcess.alignImages(patternImage, loadCompare)
-            print("Alinhamento--- %s seconds ---" % (time.time() - start_time))
-
-            start_time = time.time()
-            #Realizo a comparacao da imagem capturada com o padrão	
-            encodedCompared, encodedDefault, encodedUpFilled, encodedDiff, encodedMask = imgProcess.compareImages(Default, loadCompare)
-            print("Comparação--- %s seconds ---" % (time.time() - start_time))
-            #Atualizo a imagem de resultado e a imagem de diferenças
             window['image2'].update(data=encodedCompared)
             window['image4'].update(data=encodedDiff)
             window['image5'].update(data=encodedMask)
