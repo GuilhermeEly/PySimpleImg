@@ -215,10 +215,11 @@ class ImageProcessing():
     def compareImages(self, DefaultImage, ComparedImage):
 
         DefaultImageHolder = DefaultImage
-
+        kx = 1
+        ky = 1
         # Aplica um filtro gaussiano nas imagens para diminuir a quantidade de detalhes
-        DefaultBlured = cv2.GaussianBlur(DefaultImage, (3, 3), 0)
-        ComparedBlured = cv2.GaussianBlur(ComparedImage, (3, 3), 0)
+        DefaultBlured = cv2.GaussianBlur(DefaultImage, (kx, ky), 0)
+        ComparedBlured = cv2.GaussianBlur(ComparedImage, (kx, ky), 0)
 
         # Converte as imagens para escala de cinza
         DefaultGray = cv2.cvtColor(DefaultBlured, cv2.COLOR_BGR2GRAY)
@@ -241,15 +242,21 @@ class ImageProcessing():
         mask = np.zeros(DefaultBlured.shape, dtype='uint8')
         filled_after = ComparedBlured.copy()
 
+        #Pego o tamanho da image
+        imageSize = DefaultImage.shape
+
         # Desenha os contornos das diferenças nas images originais
         for c in contours:
             area = cv2.contourArea(c)
             if area > self.minArea:
                 x,y,w,h = cv2.boundingRect(c)
-                cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 2)
-                cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 2)
-                cv2.drawContours(mask, [c], 0, (0,255,0), -1)
-                cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
+                #Condição que identifica e remove os contornos nas bordas da imagem
+                #Necessário pois nos cantos é onde ficam os deslocamentos de alinhamento
+                if ((x and y)>0) and (y+h < imageSize[0]) and (x+w < imageSize[1]):
+                    cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 2)
+                    cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 2)
+                    cv2.drawContours(mask, [c], 0, (0,255,0), -1)
+                    cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
         # Calculo a porcentagem para chegar numa imagem com height de 350px
         scale = int((350*100)/DefaultImage.shape[0])

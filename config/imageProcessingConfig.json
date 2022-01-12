@@ -1,15 +1,15 @@
 {
     "config": [
         {
-            "minArea": 12.0,
+            "minArea": 1.0,
             "imageProcessScale": 25,
             "imageShowScale": 100,
             "iterationNumbers": 500,
             "iterationStep": 1e-08,
             "scoreLimit": 0.99,
-            "rectangleLimitOriginX": 214,
-            "rectangleLimitOriginY": 135,
-            "rectangleLimitSizeX": 261,
+            "rectangleLimitOriginX": 204,
+            "rectangleLimitOriginY": 132,
+            "rectangleLimitSizeX": 248,
             "rectangleLimitSizeY": 209,
             "focusPercentage": 25.0,
             "sqrSize": 30,
