@@ -70,9 +70,13 @@ def main():
         elif init:
             recording = False
             init = False
-            #Faço a população de uma imagem preta genérica em todas as janelas
+            #Crio uma imagem 150x150 para ser usada como placeholder até que a primeira captura seja feita
             img = np.full((150, 150), 0)
+
+            #Converto para o formato do PySimpleGUI
             imgbytes = cv2.imencode('.png', img)[1].tobytes()
+
+            #Atualizo a imagem no GUI
             window['image'].update(data=imgbytes)
             window['image2'].update(data=imgbytes)
             window['image3'].update(data=imgbytes)
