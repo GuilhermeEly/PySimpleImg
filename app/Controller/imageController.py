@@ -39,6 +39,7 @@ class ImageProcessing():
     contrast = 127
     saturation = 127
     debug = False
+    webcamName = "Integrated Webcam"
 
 
     def init(self):
@@ -77,6 +78,9 @@ class ImageProcessing():
     def setDebug(self, debug):
         self.debug = debug
 
+    def setWebcamName(self, webcamName):
+        self.webcamName = webcamName
+
     def saveConfigs(self):
         data = {}
 
@@ -98,7 +102,8 @@ class ImageProcessing():
             'brightness':               self.brightness,
             'contrast':                 self.contrast,
             'saturation':               self.saturation,
-            'debug':                    self.debug
+            'debug':                    self.debug,
+            'webcamName':               self.webcamName
         })
 
         filename = 'config\imageProcessingConfig.json'
@@ -129,6 +134,7 @@ class ImageProcessing():
                 self.contrast =                 config['contrast']
                 self.saturation =               config['saturation']
                 self.debug =                    config['debug']
+                self.webcamName =               config['webcamName']
 
         except Exception as e:
             print("Não foi possível carregar as configurações salvas, usando as padrões\n" + str(e))

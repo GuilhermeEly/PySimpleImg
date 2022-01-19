@@ -16,7 +16,8 @@
             "brightness": 127.0,
             "contrast": 127.0,
             "saturation": 127.0,
-            "debug": true
+            "debug": true,
+            "webcamName": "HD Pro Webcam C920"
         }
     ]
 }

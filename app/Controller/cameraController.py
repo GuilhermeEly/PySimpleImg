@@ -14,8 +14,9 @@ class CameraController:
 
     desiredCamName = "HD Pro Webcam C920"
 
-    def __init__(self):
+    def __init__(self, cameraName = "Integrated Webcam"):
         self.cameras = []
+        self.desiredCamName = cameraName
 
     def get_camera_info(self) -> list:
         self.cameras = []

@@ -15,16 +15,18 @@ def main():
     sg.theme('DarkAmber')
 
     imgProcess = imgProc()
-    camController = cam()
-    editView = edtView()
-    mainView = mView()
-
-    indexCam = camController.get_camera_info()
+    
     
     try:
         imgProcess.loadConfigs()
     except Exception as e:
         print('Configs not found, using default')
+
+    camController = cam(imgProcess.webcamName)
+    editView = edtView()
+    mainView = mView()
+
+    indexCam = camController.get_camera_info()
 
     init = True
 
