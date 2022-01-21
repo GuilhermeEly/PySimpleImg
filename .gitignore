@@ -10,3 +10,4 @@ pyinstallerConfig.txt
 *.pyc
 \config
 config
+savedResults

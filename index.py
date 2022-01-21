@@ -54,7 +54,8 @@ def main():
     recording = False
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
-
+    countDefault = 0
+    countCompared = 0
     while True:
         #Verifico os eventos do GUI
         event, values = window.read(timeout=20)
@@ -93,12 +94,15 @@ def main():
             #Redimensiona a imagem para facilitar a comparação
             loadCompare = frame
 
-            encodedCompared, encodedDiff, encodedMask = imgProcess.executeComparison(loadDefault.copy(), loadCompare.copy())
+            encodedCompared, encodedDiff, encodedMask, resultCompared = imgProcess.executeComparison(loadDefault.copy(), loadCompare.copy())
 
             window['image2'].update(data=encodedCompared)
             window['image4'].update(data=encodedDiff)
             window['image5'].update(data=encodedMask)
 
+            countCompared += 1
+            cv2.imwrite("savedResults\Result_"+str(countDefault)+"_"+str(countCompared)+".jpg", resultCompared)
+            
         #Salva a imagem padrão
         elif event == 'Salvar':
             ret, frame = cap.read()
@@ -109,6 +113,9 @@ def main():
 
             encodedDefaulttest = cv2.imencode('.png', loadDefaulttest)[1].tobytes()
             window['image'].update(data=encodedDefaulttest)
+
+            countDefault += 1
+            cv2.imwrite("savedResults\Default_"+str(countDefault)+".jpg", loadDefaulttest)
 
         elif event == 'Editar':
             

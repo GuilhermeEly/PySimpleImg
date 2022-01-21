@@ -279,13 +279,13 @@ class ImageProcessing():
 
         resultCompared = cv2.cvtColor(resultCompared, cv2.COLOR_BGR2RGB)
 
-        resultCompared = cv2.imencode('.png', resultCompared)[1].tobytes()
+        resultComparedEncoded = cv2.imencode('.png', resultCompared.copy())[1].tobytes()
         DefaultImageHolder = cv2.imencode('.png', DefaultImageHolder)[1].tobytes()
         upfilled = cv2.imencode('.png', upfilled)[1].tobytes()
         diff = cv2.imencode('.png', diff)[1].tobytes()
         mask = cv2.imencode('.png', mask)[1].tobytes()
 
-        return resultCompared, DefaultImageHolder, upfilled, diff, mask
+        return resultComparedEncoded, resultCompared, upfilled, diff, mask
 
     def executeComparison(self, DefaultImage, ComparedImage):
         start_time = time.time()
@@ -298,11 +298,11 @@ class ImageProcessing():
 
         start_time = time.time()
         #Realizo a comparacao da imagem capturada com o padrão	
-        encodedCompared, encodedDefault, encodedUpFilled, encodedDiff, encodedMask = self.compareImages(Default, ComparedImage)
+        encodedCompared, resultCompared, encodedUpFilled, encodedDiff, encodedMask = self.compareImages(Default, ComparedImage)
         print("Comparação--- %s seconds ---" % (time.time() - start_time))
         #Atualizo a imagem de resultado e a imagem de diferenças
 
-        return encodedCompared, encodedDiff, encodedMask
+        return encodedCompared, encodedDiff, encodedMask, resultCompared
 
     def delete(self):
         pass
