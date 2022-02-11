@@ -151,6 +151,7 @@ def main():
                 imgProcess.setRectangleLimitOriginY(int(values['originY']))
                 
                 ret, frame = cap.read()
+                frame = imgProcess.addCornerSquare(frame)
                 frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
 
                 sliderSizeX = windowEdit['sizeX']
@@ -189,6 +190,7 @@ def main():
         if recording:
             #Captura de imagem
             ret, frame = cap.read()
+            frame = imgProcess.addCornerSquare(frame)
 
             #Redimensiona a imagem
             frame = imgProcess.resizeImage(frame, imgProcess.imageProcessScale)
