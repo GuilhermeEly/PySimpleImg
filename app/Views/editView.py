@@ -49,7 +49,7 @@ class EditView:
                             ],
                             [
                                 sg.Text("Erro:", font = textConf, s = textSize), 
-                                sg.Slider(font = textConf, range=(0, 100), tick_interval=20, orientation='h', key='editArea', size = sliderSize, default_value=50)
+                                sg.Slider(font = textConf, range=(0, 2000), orientation='h', key='editArea', size = sliderSize, default_value=50)
                             ],
                         ], size=(600, 280)),
                         

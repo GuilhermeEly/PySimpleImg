@@ -169,8 +169,8 @@ class ImageProcessing():
     def addCornerSquare(self, image):
         color = [28, 28, 27]
 
-        x0 = int((self.rectangleLimitOriginX * 100) / self.imageProcessScale)
-        y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale)
+        x0 = int((self.rectangleLimitOriginX * 100) / self.imageProcessScale) + 20
+        y0 = int((self.rectangleLimitOriginY * 100) / self.imageProcessScale) + 20
         x1 = x0 + self.sqrSize
         y1 = y0 + self.sqrSize
 
@@ -258,9 +258,16 @@ class ImageProcessing():
                 x,y,w,h = cv2.boundingRect(c)
                 #Condição que identifica e remove os contornos nas bordas da imagem
                 #Necessário pois nos cantos é onde ficam os deslocamentos de alinhamento
+                
+
                 if ((x and y)>0) and (y+h < imageSize[0]) and (x+w < imageSize[1]):
-                    cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 2)
-                    cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 2)
+                    plotArea = (w) * (h)
+                    print("Area teorica:"+str(area))
+                    print("Area da quadrado:"+str(plotArea))
+                    print("Ratio: " + str(area/plotArea))
+                    if((area/plotArea)>0.35):
+                        cv2.rectangle(DefaultImage, (x, y), (x + w, y + h), (255,36,12), 2)
+                        cv2.rectangle(ComparedImage, (x, y), (x + w, y + h), (255,36,12), 2)
                     cv2.drawContours(mask, [c], 0, (0,255,0), -1)
                     cv2.drawContours(filled_after, [c], 0, (0,255,0), -1)
 
